@@ -1,95 +1,97 @@
-/* Define as cores padrão (modo claro) */
-:root {
-    --cor-fundo: #ffffff; /* Branco */
-    --cor-texto: #212529; /* Preto suave */
-    --cor-borda: #dee2e6;
-    /* Adicione outras variáveis de cor que seu site usa */
-    --cor-primaria: #007bff;
-    --cor-fundo-tabela: #f8f9fa;
-}
-
-/* Define as cores para o modo escuro */
-body.dark-mode {
-    --cor-fundo: #1a1a1a; /* Um cinza bem escuro */
-    --cor-texto: #e0e0e0; /* Um cinza claro para o texto */
-    --cor-borda: #444444;
-    /* Outras cores para o modo escuro */
-    --cor-primaria: #0d6efd; /* Pode ajustar se necessário */
-    --cor-fundo-tabela: #2c2c2c;
-}
-
-/* Estilo base do corpo */
-body {
-    background-color: var(--cor-fundo);
-    color: var(--cor-texto);
-    font-family: sans-serif;
-    transition: background-color 0.3s ease, color 0.3s ease; /* Transição suave */
-}
-
-/* Exemplo de como aplicar a outros elementos */
-h1, h2, h3 {
-    color: var(--cor-texto);
-}
-
-table {
-    background-color: var(--cor-fundo-tabela);
-    border: 1px solid var(--cor-borda);
-}
-
-/* Você precisará adicionar mais estilos para outros elementos (botões, inputs, etc.)
-   para que eles também se adaptem ao modo escuro usando as variáveis. */
-.btn-custom {
-    background-color: var(--cor-primaria);
-    color: white;
-    border: 1px solid var(--cor-primaria);
-}
-
-body.dark-mode .btn-custom {
-    /* Pode precisar de ajustes específicos para botões no dark mode */
-}
-
-/* Estilos para links */
-a {
-    color: var(--cor-primaria);
-}
-/* :root e body.dark-mode com as variáveis de cor (como já tem) */
+/* :root define as variáveis de cor para o modo claro (padrão) */
 :root {
     --cor-fundo: #ffffff;
     --cor-texto: #212529;
     --cor-borda: #dee2e6;
-    --cor-primaria: #007bff;
-    --cor-fundo-tabela: #f8f9fa;
-    /* Cores para elementos de formulário e cards */
+    --cor-link: #007bff;
+    --cor-link-hover: #0056b3;
+
+    /* Cores de componentes Bootstrap */
     --cor-fundo-card: #ffffff;
     --cor-fundo-input: #ffffff;
     --cor-texto-input: #212529;
     --cor-borda-input: #ced4da;
+    --cor-fundo-botao-primario: #007bff;
+    --cor-texto-botao-primario: #ffffff;
     --cor-fundo-botao-secundario: #6c757d;
     --cor-texto-botao-secundario: #ffffff;
+    --cor-fundo-botao-sucesso: #198754;
+    --cor-texto-botao-sucesso: #ffffff;
+    --cor-fundo-botao-perigo: #dc3545;
+    --cor-texto-botao-perigo: #ffffff;
+    --cor-fundo-botao-outline-primario-hover: #007bff;
+    --cor-texto-botao-outline-primario-hover: #ffffff;
+    --cor-borda-botao-outline-secundario: #6c757d;
+    --cor-texto-botao-outline-secundario: #6c757d;
+    --cor-fundo-botao-outline-secundario-hover: #6c757d;
+    --cor-texto-botao-outline-secundario-hover: #ffffff;
+
+
+    /* Cores de Tabelas */
+    --cor-fundo-tabela: #ffffff;
+    --cor-texto-tabela: #212529;
+    --cor-borda-tabela: #dee2e6;
+    --cor-fundo-cabecalho-tabela: #f8f9fa;
+    --cor-fundo-linha-alternada-tabela: rgba(0, 0, 0, 0.05); /* Para table-striped */
+    --cor-fundo-linha-hover-tabela: rgba(0, 0, 0, 0.075); /* Para table-hover */
 }
 
+/* body.dark-mode define as variáveis para o modo escuro */
 body.dark-mode {
-    --cor-fundo: #121212; /* Fundo um pouco mais escuro e comum para dark mode */
+    --cor-fundo: #121212;
     --cor-texto: #e0e0e0;
-    --cor-borda: #444444;
-    --cor-primaria: #0d6efd; /* Pode manter ou ajustar */
-    --cor-fundo-tabela: #1e1e1e;
-    /* Cores escuras para elementos de formulário e cards */
+    --cor-borda: #3a3a3a; /* Bordas um pouco mais visíveis */
+    --cor-link: #63a4ff; /* Azul mais claro para links */
+    --cor-link-hover: #82b7ff;
+
+    /* Cores de componentes Bootstrap para modo escuro */
     --cor-fundo-card: #1e1e1e;
     --cor-fundo-input: #2c2c2c;
     --cor-texto-input: #e0e0e0;
     --cor-borda-input: #555555;
+    --cor-fundo-botao-primario: #0d6efd;
+    --cor-texto-botao-primario: #ffffff;
     --cor-fundo-botao-secundario: #5a6268;
     --cor-texto-botao-secundario: #e0e0e0;
+    --cor-fundo-botao-sucesso: #146c43;
+    --cor-texto-botao-sucesso: #ffffff;
+    --cor-fundo-botao-perigo: #b02a37;
+    --cor-texto-botao-perigo: #ffffff;
+    --cor-fundo-botao-outline-primario-hover: #0d6efd;
+    --cor-texto-botao-outline-primario-hover: #ffffff;
+    --cor-borda-botao-outline-secundario: #8f9ca6; /* Borda mais clara */
+    --cor-texto-botao-outline-secundario: #adb5bd; /* Texto mais claro */
+    --cor-fundo-botao-outline-secundario-hover: #5a6268;
+    --cor-texto-botao-outline-secundario-hover: #e0e0e0;
+
+
+    /* Cores de Tabelas para modo escuro */
+    --cor-fundo-tabela: #1e1e1e;
+    --cor-texto-tabela: #e0e0e0;
+    --cor-borda-tabela: #3a3a3a;
+    --cor-fundo-cabecalho-tabela: #2c2c2c; /* Fundo do cabeçalho mais escuro */
+    --cor-fundo-linha-alternada-tabela: #232323; /* Para table-striped */
+    --cor-fundo-linha-hover-tabela: #2a2a2a;    /* Para table-hover */
 }
 
 /* Estilo base do corpo */
 body {
     background-color: var(--cor-fundo);
     color: var(--cor-texto);
-    font-family: sans-serif;
-    transition: background-color 0.3s ease, color 0.3s ease;
+    font-family: sans-serif; /* Considere usar a pilha de fontes do Bootstrap se quiser consistência total */
+    transition: background-color 0.2s ease-in-out, color 0.2s ease-in-out;
 }
+
+/* Sobrescrevendo o bg-light do Bootstrap quando o modo escuro está ativo */
+body.dark-mode.bg-light,
+body.dark-mode .bg-light { /* Para elementos filhos que possam ter bg-light */
+    background-color: var(--cor-fundo) !important; /* !important pode ser necessário */
+    color: var(--cor-texto);
+}
+body.dark-mode .container { /* Garante que o container também pegue o fundo */
+     background-color: var(--cor-fundo);
+}
+
 
 /* Cabeçalhos */
 body.dark-mode h1,
@@ -103,90 +105,193 @@ body.dark-mode h6 {
 
 /* Links */
 body.dark-mode a {
-    color: var(--cor-primaria); /* Ou uma cor de link específica para modo escuro */
+    color: var(--cor-link);
+}
+body.dark-mode a:hover {
+    color: var(--cor-link-hover);
 }
 
-/* Para sobrescrever o bg-light do Bootstrap no body e no container principal */
-body.dark-mode, 
-body.dark-mode .container, 
-body.dark-mode .bg-light { /* Garante que o bg-light seja sobrescrito */
-    background-color: var(--cor-fundo) !important; /* !important pode ser necessário para Bootstrap */
-    color: var(--cor-texto);
-}
-
-/* Estilizando o Card do formulário */
+/* Cards (usados no formulário do dashboard) */
 body.dark-mode .card {
     background-color: var(--cor-fundo-card);
     border-color: var(--cor-borda);
 }
-
-/* Estilizando labels dentro do card no modo escuro */
+body.dark-mode .card .card-header, /* Se usar card-header */
+body.dark-mode .card .card-title,  /* Se usar card-title dentro do card */
+body.dark-mode .card h5,
 body.dark-mode .card label {
     color: var(--cor-texto);
 }
 
-/* Estilizando inputs e selects */
+/* Elementos de Formulário */
 body.dark-mode .form-control,
 body.dark-mode .form-select {
     background-color: var(--cor-fundo-input);
     color: var(--cor-texto-input);
     border-color: var(--cor-borda-input);
 }
-
-/* Placeholder de inputs no modo escuro */
+body.dark-mode .form-control:focus,
+body.dark-mode .form-select:focus {
+    background-color: var(--cor-fundo-input); /* Mantém cor no foco */
+    color: var(--cor-texto-input);
+    border-color: var(--cor-link); /* Borda com cor de link no foco */
+    box-shadow: 0 0 0 0.25rem rgba(var(--cor-link-rgb, 13, 110, 253), 0.25); /* Adapta o box-shadow do Bootstrap */
+}
 body.dark-mode .form-control::placeholder {
-    color: #888; /* Ajuste conforme necessário */
+    color: #868e96; /* Placeholder mais suave */
+}
+body.dark-mode .form-check-input { /* Para checkboxes e radios */
+    background-color: var(--cor-fundo-input);
+    border-color: var(--cor-borda-input);
+}
+body.dark-mode .form-check-input:checked {
+    background-color: var(--cor-link);
+    border-color: var(--cor-link);
 }
 
-/* Botões - Exemplo para botões secundários (Livro Diário, etc.) */
-/* Você precisará de regras para .btn-success, .btn-outline-danger, etc., se quiser alterá-los */
+/* Botões Bootstrap */
+body.dark-mode .btn-primary {
+    background-color: var(--cor-fundo-botao-primario);
+    border-color: var(--cor-fundo-botao-primario);
+    color: var(--cor-texto-botao-primario);
+}
 body.dark-mode .btn-secondary {
     background-color: var(--cor-fundo-botao-secundario);
     border-color: var(--cor-fundo-botao-secundario);
     color: var(--cor-texto-botao-secundario);
 }
-
+body.dark-mode .btn-success {
+    background-color: var(--cor-fundo-botao-sucesso);
+    border-color: var(--cor-fundo-botao-sucesso);
+    color: var(--cor-texto-botao-sucesso);
+}
+body.dark-mode .btn-danger {
+    background-color: var(--cor-fundo-botao-perigo);
+    border-color: var(--cor-fundo-botao-perigo);
+    color: var(--cor-texto-botao-perigo);
+}
+/* Botões Outline */
+body.dark-mode .btn-outline-primary {
+    color: var(--cor-link);
+    border-color: var(--cor-link);
+}
+body.dark-mode .btn-outline-primary:hover {
+    background-color: var(--cor-fundo-botao-outline-primario-hover);
+    color: var(--cor-texto-botao-outline-primario-hover);
+}
 body.dark-mode .btn-outline-secondary {
-    color: var(--cor-texto-botao-secundario);
-    border-color: var(--cor-fundo-botao-secundario);
+    color: var(--cor-texto-botao-outline-secundario);
+    border-color: var(--cor-borda-botao-outline-secundario);
 }
 body.dark-mode .btn-outline-secondary:hover {
-    background-color: var(--cor-fundo-botao-secundario);
-    color: var(--cor-texto); /* Ajustar cor do texto no hover */
+    background-color: var(--cor-fundo-botao-outline-secundario-hover);
+    color: var(--cor-texto-botao-outline-secundario-hover);
+}
+body.dark-mode .btn-outline-danger { /* Exemplo para o botão Sair */
+    color: var(--cor-fundo-botao-perigo);
+    border-color: var(--cor-fundo-botao-perigo);
+}
+body.dark-mode .btn-outline-danger:hover {
+    background-color: var(--cor-fundo-botao-perigo);
+    color: var(--cor-texto-botao-perigo);
 }
 
 
-/* Adicione mais regras conforme necessário para outros elementos */
-
-/* Chart.js - Cores dos eixos e título no modo escuro */
-/* Esta parte é um pouco mais complexa de fazer apenas com CSS,
-   idealmente seria atualizada via JavaScript quando o tema muda.
-   Mas podemos tentar algumas coisas genéricas. */
-body.dark-mode #graficoResumo {
-    /* Se o Chart.js renderizar texto diretamente no canvas, o CSS pode não afetar.
-       Mas se ele usar elementos HTML para legendas/títulos fora do canvas, pode funcionar. */
+/* Tabelas Bootstrap */
+body.dark-mode .table {
+    color: var(--cor-texto-tabela);
+    border-color: var(--cor-borda-tabela);
+    background-color: var(--cor-fundo-tabela); /* Fundo base da tabela */
 }
 
-/* Para as cores dos ticks e grid do Chart.js, o ideal é mudar via JavaScript.
-   No seu script do Chart.js, você pode ter uma função para atualizar as opções:
+body.dark-mode .table th, /* Cabeçalhos e células */
+body.dark-mode .table td {
+    border-color: var(--cor-borda-tabela); /* Garante que as bordas internas usem a cor certa */
+}
 
-   function updateChartColors(chartInstance, isDarkMode) {
-       const textColor = isDarkMode ? 'rgba(224, 224, 224, 0.87)' : 'rgba(0, 0, 0, 0.87)';
-       const gridColor = isDarkMode ? 'rgba(224, 224, 224, 0.1)' : 'rgba(0, 0, 0, 0.1)';
-       const titleColor = isDarkMode ? '#e0e0e0' : '#666'; // Exemplo
+body.dark-mode .table > :not(caption) > * > * { /* Seletor mais genérico do Bootstrap para células */
+    background-color: var(--bs-table-bg); /* Deixa o Bootstrap controlar ou defina aqui */
+    /* Se quiser forçar o fundo da célula: background-color: var(--cor-fundo-tabela); */
+}
 
-       chartInstance.options.scales.x.ticks.color = textColor;
-       chartInstance.options.scales.x.grid.color = gridColor;
-       chartInstance.options.scales.y.ticks.color = textColor;
-       chartInstance.options.scales.y.grid.color = gridColor;
-       chartInstance.options.plugins.title.color = titleColor;
-       // Adicione outras opções de cor que queira mudar
-       chartInstance.update();
-   }
 
-   // E no seu script.js, chame esta função dentro do applyTheme:
-   // (Primeiro, guarde a instância do gráfico numa variável global ou acessível)
-   // if (window.myChartInstance) { // Supondo que myChartInstance é a sua instância do gráfico
-   //    updateChartColors(window.myChartInstance, theme === 'dark');
-   // }
-*/
+body.dark-mode .table thead th {
+    background-color: var(--cor-fundo-cabecalho-tabela);
+    color: var(--cor-texto-tabela);
+    border-bottom-width: 2px; /* Destaca mais o cabeçalho */
+    border-bottom-color: var(--cor-borda-tabela);
+}
+
+/* Tabela Listrada (table-striped) */
+body.dark-mode .table-striped > tbody > tr:nth-of-type(odd) > * {
+    --bs-table-accent-bg: var(--cor-fundo-linha-alternada-tabela); /* Usa a variável para a cor da linha ímpar */
+    color: var(--cor-texto-tabela);
+}
+body.dark-mode .table-striped > tbody > tr:nth-of-type(even) > * {
+     /* Para linhas pares, se quiser uma cor diferente da base da tabela, defina aqui.
+        Senão, ela herdará o fundo da .table ou da célula.
+        Exemplo: --bs-table-accent-bg: #282828; */
+    color: var(--cor-texto-tabela);
+}
+
+
+/* Tabela com Hover (table-hover) */
+body.dark-mode .table-hover > tbody > tr:hover > * {
+    --bs-table-accent-bg: var(--cor-fundo-linha-hover-tabela);
+    color: var(--cor-texto-tabela);
+}
+
+/* Tabela com Bordas (table-bordered) */
+body.dark-mode .table-bordered {
+    border-color: var(--cor-borda-tabela);
+}
+/* As bordas internas já devem ser cobertas por .table th, .table td */
+
+/* Paginação (se usar) */
+body.dark-mode .pagination .page-link {
+    background-color: var(--cor-fundo-input);
+    border-color: var(--cor-borda-input);
+    color: var(--cor-link);
+}
+body.dark-mode .pagination .page-link:hover {
+    background-color: #383838; /* Um pouco mais claro no hover */
+    border-color: var(--cor-borda-input);
+}
+body.dark-mode .pagination .page-item.active .page-link {
+    background-color: var(--cor-link);
+    border-color: var(--cor-link);
+    color: var(--cor-fundo); /* Texto claro sobre fundo de link */
+}
+body.dark-mode .pagination .page-item.disabled .page-link {
+    background-color: var(--cor-fundo-input);
+    border-color: var(--cor-borda-input);
+    color: #6c757d; /* Cor desabilitada */
+}
+
+/* Ajustes para o Chart.js (idealmente via JavaScript) */
+/* Se o Chart.js usar fontes do sistema, a cor do texto do body pode ser herdada.
+   Para cores de eixos, legendas, títulos, o ideal é atualizar o objeto de opções do gráfico
+   via JavaScript quando o tema é alterado, como comentado anteriormente. */
+body.dark-mode .chartjs-legend-item-text, /* Exemplo se o Chart.js usar classes assim */
+body.dark-mode .chartjs-title-text,
+body.dark-mode .chartjs-axis-label {
+    fill: var(--cor-texto) !important; /* Tentar forçar cor do texto para SVGs */
+    color: var(--cor-texto) !important; /* Para elementos HTML */
+}
+
+/* Scrollbar (opcional, para navegadores baseados em WebKit como Chrome/Edge/Safari) */
+body.dark-mode ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+}
+body.dark-mode ::-webkit-scrollbar-track {
+    background: var(--cor-fundo-input);
+    border-radius: 5px;
+}
+body.dark-mode ::-webkit-scrollbar-thumb {
+    background: #555;
+    border-radius: 5px;
+}
+body.dark-mode ::-webkit-scrollbar-thumb:hover {
+    background: #666;
+}
