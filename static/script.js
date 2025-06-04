@@ -12,6 +12,10 @@ document.addEventListener('DOMContentLoaded', () => {
         if (typeof window.updateChartColorsForDataPage === 'function') {
             window.updateChartColorsForDataPage(isDark);
         }
+        // ADICIONADO: Chamada para atualizar as cores do gráfico de pizza no dashboard
+        if (typeof window.updateChartColorsForPieDashboard === 'function') {
+            window.updateChartColorsForPieDashboard(isDark);
+        }
         // Adicione chamadas para outras funções de atualização de gráficos aqui, se necessário
     }
 
@@ -21,12 +25,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (isDark) {
             body.classList.add('dark-mode');
-            if (darkModeToggle) {
+            if (darkModeToggle) { // Verifica se o botão existe na página
                 darkModeToggle.textContent = 'Modo Claro';
             }
         } else {
             body.classList.remove('dark-mode');
-            if (darkModeToggle) {
+            if (darkModeToggle) { // Verifica se o botão existe na página
                 darkModeToggle.textContent = 'Modo Escuro';
             }
         }

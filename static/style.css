@@ -355,3 +355,6 @@ body.dark-mode ::-webkit-scrollbar-thumb {
 body.dark-mode ::-webkit-scrollbar-thumb:hover {
     background: #666;
 }
+body.dark-mode p {
+    color: var(--cor-texto);
+}

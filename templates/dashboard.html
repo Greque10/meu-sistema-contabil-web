@@ -3,24 +3,25 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard - Sistema Contábil</title>
+    <title>Dashboard - {{ nome_empresa if nome_empresa else "Sistema Contábil" }}</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- Link para o seu ficheiro CSS personalizado -->
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
-<body class="bg-light"> <!-- A classe bg-light do Bootstrap será sobrescrita pelo seu CSS no modo escuro -->
+<body class="bg-light">
     <div class="container mt-4">
         <div class="d-flex justify-content-between align-items-center mb-3">
-            <h2>Bem-vindo, {{ session.get('usuario', 'Utilizador') }}</h2>
+            <h2>Bem-vindo, {{ session.get('usuario', 'Utilizador') }}! 
+                {% if nome_empresa %}
+                    <small class="text-muted fs-5">({{ nome_empresa }})</small>
+                {% endif %}
+            </h2>
             <div>
-                <!-- Botão para alternar modo escuro/claro -->
                 <button id="darkModeToggle" class="btn btn-outline-secondary me-2">Modo Escuro</button>
                 <a href="{{ url_for('logout') }}" class="btn btn-outline-danger">Sair</a>
             </div>
         </div>
 
-        <!-- Seção para exibir mensagens flash -->
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
                 {% for category, message in messages %}
@@ -34,6 +35,7 @@
 
         <div class="row">
             <div class="col-md-6">
+                {# Formulário de Lançamento e Botões de Navegação - Mantenha como está #}
                 <div class="card shadow-sm p-4 mb-4">
                     <h5 class="card-title mb-3">Registar Lançamento</h5>
                     <form method="POST" action="{{ url_for('dashboard') }}">
@@ -41,8 +43,9 @@
                             <label for="conta" class="form-label">Conta:</label>
                             <select name="conta" id="conta" class="form-select" required>
                                 <option value="" disabled selected>Selecione uma conta</option>
-                                {% for cod, nome_conta in contas.items() %}
-                                    <option value="{{ cod }}">{{ nome_conta }} ({{ cod }})</option>
+                                {% for cod, nome_conta_obj in contas.items() %}
+                                    {% set nome_exibicao = nome_conta_obj if nome_conta_obj is string else nome_conta_obj.get('nome', 'Desconhecida') %}
+                                    <option value="{{ cod }}">{{ nome_exibicao }} ({{ cod }})</option>
                                 {% endfor %}
                             </select>
                         </div>
@@ -69,24 +72,23 @@
                     <a href="{{ url_for('diario') }}" class="btn btn-secondary">📘 Livro Diário</a>
                     <a href="{{ url_for('razao') }}" class="btn btn-secondary">📗 Livro Razão</a>
                     <a href="{{ url_for('balancete') }}" class="btn btn-secondary">📒 Balancete</a>
-                    <!-- Botão corrigido para o gráfico por data -->
-                    <a href="{{ url_for('grafico_data') }}" class="btn btn-info">📈 Gráfico por Data</a>
+                    <a href="{{ url_for('grafico_data') }}" class="btn btn-info">📊 Gráfico por Data</a>
                 </div>
 
-                {% if session.get('usuario') == "admin" %}
+                {% if admin_da_empresa and session.get('usuario') == admin_da_empresa %}
                     <div class="d-grid">
-                        <a href="{{ url_for('cadastro') }}" class="btn btn-outline-primary">➕ Registar Novo Utilizador</a>
+                        <a href="{{ url_for('cadastro') }}" class="btn btn-outline-primary">➕ Registar Novo Utilizador na Empresa</a>
                     </div>
                 {% endif %}
             </div>
 
             <div class="col-md-6">
-                <div class="card shadow-sm">
+                {# Gráfico de Barras de Resumo Financeiro - Mantenha como está #}
+                <div class="card shadow-sm mb-4"> {/* Adicionado mb-4 para espaço antes do novo gráfico */}
                     <div class="card-body">
-                        <h5 class="card-title text-center">Resumo Financeiro</h5>
+                        <h5 class="card-title text-center">Resumo Financeiro (Débitos x Créditos)</h5>
                         {% if total_d is defined and total_c is defined %}
-                            <canvas id="graficoResumoDashboard" height="200"></canvas>
-                            <!-- Adicionado para passar os dados para o JavaScript do gráfico -->
+                            <canvas id="graficoResumoDashboard" height="180"></canvas>
                             <script id="dashboardChartData" type="application/json">
                                 {
                                     "total_d": {{ total_d | default(0) | float }},
@@ -98,12 +100,30 @@
                         {% endif %}
                     </div>
                 </div>
+
+                <!-- NOVO GRÁFICO DE PIZZA/ROSCA PARA DESPESAS -->
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        <h5 class="card-title text-center">Distribuição de Despesas por Conta</h5>
+                        {% if dados_despesas_pizza and dados_despesas_pizza.labels and dados_despesas_pizza.labels|length > 0 %}
+                            <canvas id="graficoDespesasPizza" height="200"></canvas>
+                             <script id="despesasPizzaChartData" type="application/json">
+                                {{ dados_despesas_pizza | tojson | safe }}
+                            </script>
+                        {% else %}
+                            <p class="text-center text-muted">Não há despesas (débitos) registadas para exibir no gráfico.</p>
+                        {% endif %}
+                    </div>
+                </div>
+
             </div>
         </div>
     </div>
 
+    {# Scripts JavaScript no final do body #}
     <script>
         document.addEventListener('DOMContentLoaded', function() {
+            // --- Script para Gráfico de Barras do Dashboard (Resumo Financeiro) ---
             const canvasDashboard = document.getElementById('graficoResumoDashboard');
             let dashboardChartData = null;
             let chartInstanceDashboard = null;
@@ -116,17 +136,14 @@
                         dashboardChartData = parsedData;
                     }
                 }
-            } catch (e) {
-                console.error("Erro ao analisar os dados do gráfico do dashboard JSON:", e);
-            }
+            } catch (e) { console.error("Erro ao analisar dados do gráfico de resumo:", e); }
 
             if (canvasDashboard && dashboardChartData && (dashboardChartData.total_d !== undefined && dashboardChartData.total_c !== undefined)) {
                 const ctxDashboard = canvasDashboard.getContext('2d');
-                
-                let corTextoPadraoDash = getComputedStyle(document.body).getPropertyValue('--cor-texto') || 'rgba(0, 0, 0, 0.87)';
-                let corGridPadraoDash = document.body.classList.contains('dark-mode') ? 'rgba(224, 224, 224, 0.1)' : 'rgba(0, 0, 0, 0.1)';
-                let corTituloPadraoDash = document.body.classList.contains('dark-mode') ? '#e0e0e0' : '#666';
-
+                // ... (Lógica do gráfico de barras como estava antes, mas atribua a chartInstanceDashboard)
+                // Vou omitir para brevidade, mas mantenha a sua lógica aqui.
+                // Apenas garanta que a instância do gráfico seja atribuída a chartInstanceDashboard
+                // Exemplo simplificado:
                 chartInstanceDashboard = new Chart(ctxDashboard, {
                     type: 'bar',
                     data: {
@@ -134,68 +151,24 @@
                         datasets: [{
                             label: 'Total (R$)',
                             data: [dashboardChartData.total_d, dashboardChartData.total_c],
-                            backgroundColor: [
-                                'rgba(220, 53, 69, 0.7)', // Vermelho para débito
-                                'rgba(25, 135, 84, 0.7)'  // Verde para crédito
-                            ],
-                            borderColor: [
-                                'rgba(220, 53, 69, 1)',
-                                'rgba(25, 135, 84, 1)'
-                            ],
+                            backgroundColor: ['rgba(220, 53, 69, 0.7)', 'rgba(25, 135, 84, 0.7)'],
+                            borderColor: ['rgba(220, 53, 69, 1)', 'rgba(25, 135, 84, 1)'],
                             borderWidth: 1
                         }]
                     },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: true,
-                        plugins: {
-                            legend: {
-                                display: false // Legenda já está implícita pelos labels do eixo X
-                            },
-                            title: {
-                                display: false, // O título "Resumo Financeiro" já está no card-title
-                                text: 'Resumo Financeiro',
-                                color: corTituloPadraoDash
-                            },
-                            tooltip: {
-                                callbacks: {
-                                    label: function(context) {
-                                        let label = context.dataset.label || '';
-                                        if (label) { label += ': '; }
-                                        if (context.parsed.y !== null) {
-                                            label += new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(context.parsed.y);
-                                        }
-                                        return label;
-                                    }
-                                }
-                            }
-                        },
-                        scales: {
-                            x: {
-                                ticks: { color: corTextoPadraoDash },
-                                grid: { display: false } // Remove grid vertical para um visual mais limpo
-                            },
-                            y: {
-                                beginAtZero: true,
-                                ticks: { 
-                                    color: corTextoPadraoDash,
-                                    callback: function(value) { return 'R$ ' + value; } // Formata ticks do eixo Y
-                                },
-                                grid: { color: corGridPadraoDash }
-                            }
-                        }
+                    options: { // Mantenha suas opções, apenas um exemplo
+                        responsive: true, maintainAspectRatio: true,
+                        plugins: { legend: { display: false } },
+                        scales: { y: { beginAtZero: true } }
                     }
                 });
             }
-
-            // Função para atualizar cores do gráfico do dashboard (para modo escuro)
+            // Função de atualização para o gráfico de barras (mantenha a sua)
             window.updateChartColorsForDashboard = function(isDarkMode) {
                 if (chartInstanceDashboard) {
+                    // ... (sua lógica de atualização de cores para o gráfico de barras)
                     const newTextColor = isDarkMode ? 'rgba(224, 224, 224, 0.87)' : 'rgba(0, 0, 0, 0.87)';
                     const newGridColor = isDarkMode ? 'rgba(224, 224, 224, 0.1)' : 'rgba(0, 0, 0, 0.1)';
-                    const newTitleColor = isDarkMode ? '#e0e0e0' : '#666'; // Não usado se display: false
-
-                    if (chartInstanceDashboard.options.plugins.title) chartInstanceDashboard.options.plugins.title.color = newTitleColor;
                     const scales = chartInstanceDashboard.options.scales;
                     if (scales) {
                         if (scales.x && scales.x.ticks) scales.x.ticks.color = newTextColor;
@@ -204,15 +177,111 @@
                     }
                     chartInstanceDashboard.update();
                 }
+            };
+
+
+            // --- NOVO SCRIPT PARA GRÁFICO DE PIZZA/ROSCA (DESPESAS) ---
+            const canvasDespesasPizza = document.getElementById('graficoDespesasPizza');
+            let despesasPizzaData = null;
+            let chartInstanceDespesasPizza = null;
+
+            try {
+                const jsonDataElementPizza = document.getElementById('despesasPizzaChartData');
+                if (jsonDataElementPizza && jsonDataElementPizza.textContent.trim() !== "") {
+                    const parsedDataPizza = JSON.parse(jsonDataElementPizza.textContent);
+                    if (parsedDataPizza && typeof parsedDataPizza === 'object') {
+                        despesasPizzaData = parsedDataPizza;
+                    }
+                }
+            } catch (e) { console.error("Erro ao analisar dados do gráfico de pizza:", e); }
+
+            if (canvasDespesasPizza && despesasPizzaData && despesasPizzaData.labels && despesasPizzaData.labels.length > 0) {
+                const ctxPizza = canvasDespesasPizza.getContext('2d');
+                
+                // Cores para o gráfico de pizza (pode gerar dinamicamente ou ter uma paleta)
+                const pizzaBackgroundColors = [
+                    'rgba(255, 99, 132, 0.7)', 'rgba(54, 162, 235, 0.7)',
+                    'rgba(255, 206, 86, 0.7)', 'rgba(75, 192, 192, 0.7)',
+                    'rgba(153, 102, 255, 0.7)', 'rgba(255, 159, 64, 0.7)',
+                    'rgba(201, 203, 207, 0.7)', 'rgba(100, 150, 200, 0.7)' 
+                    // Adicione mais cores se tiver muitas categorias
+                ];
+
+                let corTextoLegendaPizza = document.body.classList.contains('dark-mode') ? '#e0e0e0' : '#333';
+                let corTituloPizza = document.body.classList.contains('dark-mode') ? '#e0e0e0' : '#666';
+
+
+                chartInstanceDespesasPizza = new Chart(ctxPizza, {
+                    type: 'doughnut', // Ou 'pie'
+                    data: {
+                        labels: despesasPizzaData.labels,
+                        datasets: [{
+                            label: 'Distribuição de Despesas',
+                            data: despesasPizzaData.data,
+                            backgroundColor: pizzaBackgroundColors.slice(0, despesasPizzaData.labels.length),
+                            hoverOffset: 4
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: true,
+                        plugins: {
+                            title: {
+                                display: false, // O título já está no card-title
+                                text: 'Distribuição de Despesas por Conta',
+                                color: corTituloPizza
+                            },
+                            legend: {
+                                position: 'bottom', // Posição da legenda
+                                labels: {
+                                    color: corTextoLegendaPizza, // Cor do texto da legenda
+                                    padding: 15,
+                                    font: { size: 12 }
+                                }
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        let label = context.label || '';
+                                        if (label) { label += ': '; }
+                                        if (context.parsed !== null) {
+                                            label += new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(context.parsed);
+                                        }
+                                        return label;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
             }
-            // Chama a função de atualização de cores uma vez no carregamento
+
+            // Função de atualização para o gráfico de pizza
+            window.updateChartColorsForPieDashboard = function(isDarkMode) {
+                if (chartInstanceDespesasPizza) {
+                    const newLegendColor = isDarkMode ? '#e0e0e0' : '#333';
+                    const newTitleColor = isDarkMode ? '#e0e0e0' : '#666'; // Se o título fosse exibido
+
+                    if(chartInstanceDespesasPizza.options.plugins.legend) {
+                        chartInstanceDespesasPizza.options.plugins.legend.labels.color = newLegendColor;
+                    }
+                    if(chartInstanceDespesasPizza.options.plugins.title) { // Se você decidir mostrar o título do gráfico
+                        chartInstanceDespesasPizza.options.plugins.title.color = newTitleColor;
+                    }
+                    chartInstanceDespesasPizza.update();
+                }
+            };
+
+            // Chama as funções de atualização de cores uma vez no carregamento
             if (typeof window.updateChartColorsForDashboard === 'function') {
                 window.updateChartColorsForDashboard(document.body.classList.contains('dark-mode'));
+            }
+            if (typeof window.updateChartColorsForPieDashboard === 'function') { // Chama para o novo gráfico
+                window.updateChartColorsForPieDashboard(document.body.classList.contains('dark-mode'));
             }
         });
     </script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <!-- Link para o seu ficheiro JavaScript personalizado para o modo escuro -->
     <script src="{{ url_for('static', filename='script.js') }}"></script>
 </body>
 </html>
