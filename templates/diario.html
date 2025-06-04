@@ -1,61 +1,64 @@
 <!DOCTYPE html>
-<html>
+<html lang="pt-br">
 <head>
-  <title>Livro Diário</title>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-  <title>Livro Diário</title> <!-- Ou Livro Razão, Balancete -->
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Livro Diário - Sistema Contábil</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body class="bg-light">
-  <div class="container mt-4">
-    <h2>📘 Livro Diário</h2>
-    <a href="/dashboard" class="btn btn-secondary mb-3">← Voltar</a>
-    <a href="/exportar_diario" class="btn btn-outline-dark mb-3">📄 Exportar PDF</a>
+    <div class="container mt-4">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h2>📘 Livro Diário</h2>
+            <div>
+                <button id="darkModeToggle" class="btn btn-outline-secondary me-2">Modo Escuro</button>
+                <a href="{{ url_for('dashboard') }}" class="btn btn-primary">← Voltar ao Dashboard</a>
+            </div>
+        </div>
 
-    <!-- Filtro por data -->
-    <form method="POST" class="row g-3 mb-4">
-      <div class="col-auto">
-        <label>De:</label>
-        <input type="date" name="data_inicio" class="form-control" value="{{ data_inicio or '' }}">
-      </div>
-      <div class="col-auto">
-        <label>Até:</label>
-        <input type="date" name="data_fim" class="form-control" value="{{ data_fim or '' }}">
-      </div>
-      <div class="col-auto align-self-end">
-        <button type="submit" class="btn btn-primary">Filtrar</button>
-      </div>
-    </form>
+        {% if lancamentos %}
+            <div class="table-responsive">
+                <table class="table table-bordered table-striped table-hover">
+                    <thead class="table-dark">
+                        <tr>
+                            <th scope="col">Data</th>
+                            <th scope="col">Conta (Código)</th>
+                            <th scope="col">Histórico</th>
+                            <th scope="col" class="text-end">Débito (R$)</th>
+                            <th scope="col" class="text-end">Crédito (R$)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for lancamento in lancamentos %}
+                        <tr>
+                            <td>{{ lancamento.data }}</td>
+                            <!-- CORREÇÃO AQUI: Usar lancamento.conta_nome e lancamento.conta_cod -->
+                            <td>{{ lancamento.conta_nome }} ({{ lancamento.conta_cod }})</td>
+                            <td>{{ lancamento.historico }}</td>
+                            <td class="text-end">
+                                {% if lancamento.tipo == 'D' %}
+                                    {{ "%.2f"|format(lancamento.valor) }}
+                                {% endif %}
+                            </td>
+                            <td class="text-end">
+                                {% if lancamento.tipo == 'C' %}
+                                    {{ "%.2f"|format(lancamento.valor) }}
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="alert alert-info" role="alert">
+                Nenhum lançamento encontrado.
+            </div>
+        {% endif %}
+    </div>
 
-    <table class="table table-bordered table-striped">
-      <thead>
-        <tr>
-          <th>Data</th>
-          <th>Conta</th>
-          <th>Tipo</th>
-          <th>Valor</th>
-          <th>Histórico</th>
-          <th>Ações</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for l in lancamentos %}
-          <tr>
-            <td>{{ l.data }}</td>
-            <td>{{ plano[l.conta] }} ({{ l.conta }})</td>
-            <td>{{ 'Débito' if l.tipo == 'D' else 'Crédito' }}</td>
-            <td>R$ {{ '%.2f'|format(l.valor) }}</td>
-            <td>{{ l.historico }}</td>
-            <td>
-              <a href="/editar/{{ l.id }}" class="btn btn-sm btn-warning">✏️</a>
-              <a href="/excluir/{{ l.id }}" class="btn btn-sm btn-danger">🗑️</a>
-            </td>
-          </tr>
-        {% endfor %}
-      </tbody>
-    </table>
-  </div>
-  <script src="{{ url_for('static', filename='script.js') }}"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
 </body>
 </html>

@@ -1,50 +1,43 @@
 from flask import Flask, render_template, request, redirect, url_for, session, flash
 import json
-from datetime import datetime
-import os # Adicionado para verificar se arquivos existem
+from datetime import datetime, timedelta # <--- CORREÇÃO AQUI: timedelta foi adicionado
+import os
 
 app = Flask(__name__)
-app.secret_key = 'sua_chave_secreta_aqui_pode_mudar_depois' # Mude para uma chave secreta forte e única
+app.secret_key = 'sua_chave_secreta_aqui_pode_mudar_depois'
 
 # --- Constantes para nomes de arquivos ---
-BASE_DIR = os.path.dirname(os.path.abspath(__file__)) # Pega o diretório do app.py
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 ARQUIVO_LANCAMENTOS = os.path.join(BASE_DIR, 'lancamentos.json')
 ARQUIVO_USUARIOS = os.path.join(BASE_DIR, 'usuarios.json')
 ARQUIVO_CONTAS = os.path.join(BASE_DIR, 'contas.json')
 
 # --- Funções Auxiliares para Manipulação de Dados ---
 def carregar_dados(arquivo):
-    """Carrega dados de um arquivo JSON."""
-    if not os.path.exists(arquivo): # Verifica se o arquivo existe
-        return [] if arquivo == ARQUIVO_LANCAMENTOS else {} # Retorna lista vazia para lançamentos, dict para outros
+    if not os.path.exists(arquivo):
+        return [] if arquivo == ARQUIVO_LANCAMENTOS else {}
     try:
         with open(arquivo, 'r', encoding='utf-8') as f:
-            # Retorna lista vazia ou dict se o arquivo estiver vazio mas existir
             content = f.read()
             if not content:
                 return [] if arquivo == ARQUIVO_LANCAMENTOS else {}
             return json.loads(content)
     except json.JSONDecodeError:
-        # Se o arquivo existir mas estiver corrompido/mal formatado
         return [] if arquivo == ARQUIVO_LANCAMENTOS else {}
-    except FileNotFoundError: # Redundante devido ao os.path.exists, mas bom ter
+    except FileNotFoundError:
         return [] if arquivo == ARQUIVO_LANCAMENTOS else {}
 
 def salvar_dados(dados, arquivo):
-    """Salva dados em um arquivo JSON."""
     with open(arquivo, 'w', encoding='utf-8') as f:
-        json.dump(dados, f, indent=4, ensure_ascii=False) # indent=4 para melhor leitura
+        json.dump(dados, f, indent=4, ensure_ascii=False)
 
 def carregar_contas():
-    """Carrega o plano de contas."""
     return carregar_dados(ARQUIVO_CONTAS)
 
 def carregar_usuarios():
-    """Carrega os dados dos usuários."""
     return carregar_dados(ARQUIVO_USUARIOS)
 
 def salvar_usuarios(usuarios):
-    """Salva os dados dos usuários."""
     salvar_dados(usuarios, ARQUIVO_USUARIOS)
 
 # --- Rotas da Aplicação ---
@@ -78,53 +71,49 @@ def dashboard():
     lancamentos = carregar_dados(ARQUIVO_LANCAMENTOS)
 
     if request.method == 'POST':
-        # Lógica para registrar novo lançamento
         conta_selecionada_cod = request.form['conta']
         tipo = request.form['tipo']
         valor_str = request.form['valor']
         historico = request.form['historico']
         data_atual = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 
-        # Validação do valor
         try:
             valor = float(valor_str)
             if valor <= 0:
                 flash('O valor do lançamento deve ser positivo.', 'warning')
-                # Recarrega os dados para o gráfico e formulário
-                total_d = sum(float(l.get('valor', 0)) for l in lancamentos if l.get('tipo') == 'D')
-                total_c = sum(float(l.get('valor', 0)) for l in lancamentos if l.get('tipo') == 'C')
-                return render_template('dashboard.html', usuario=session['usuario'], contas=contas, total_d=total_d, total_c=total_c)
+                # Recarrega dados para o template em caso de erro
+                total_d_erro = sum(float(l.get('valor', 0)) for l in lancamentos if l.get('tipo') == 'D')
+                total_c_erro = sum(float(l.get('valor', 0)) for l in lancamentos if l.get('tipo') == 'C')
+                return render_template('dashboard.html', usuario=session.get('usuario'), contas=contas, total_d=total_d_erro, total_c=total_c_erro)
         except ValueError:
             flash('Valor inválido inserido.', 'danger')
-            total_d = sum(float(l.get('valor', 0)) for l in lancamentos if l.get('tipo') == 'D')
-            total_c = sum(float(l.get('valor', 0)) for l in lancamentos if l.get('tipo') == 'C')
-            return render_template('dashboard.html', usuario=session['usuario'], contas=contas, total_d=total_d, total_c=total_c)
-
+            total_d_erro = sum(float(l.get('valor', 0)) for l in lancamentos if l.get('tipo') == 'D')
+            total_c_erro = sum(float(l.get('valor', 0)) for l in lancamentos if l.get('tipo') == 'C')
+            return render_template('dashboard.html', usuario=session.get('usuario'), contas=contas, total_d=total_d_erro, total_c=total_c_erro)
 
         novo_lancamento = {
-            'id': len(lancamentos) + 1, # Simples ID, pode ser melhorado
+            'id': len(lancamentos) + 1,
             'data': data_atual,
             'conta_cod': conta_selecionada_cod,
-            'conta_nome': contas.get(conta_selecionada_cod, "Conta Desconhecida"), # Pega o nome da conta
+            'conta_nome': contas.get(conta_selecionada_cod, "Conta Desconhecida"),
             'tipo': tipo,
             'valor': valor,
             'historico': historico,
-            'usuario': session['usuario']
+            'usuario': session.get('usuario')
         }
         lancamentos.append(novo_lancamento)
         salvar_dados(lancamentos, ARQUIVO_LANCAMENTOS)
         flash('Lançamento registrado com sucesso!', 'success')
-        return redirect(url_for('dashboard')) # Redireciona para limpar o formulário
+        return redirect(url_for('dashboard'))
 
-    # Cálculo dos totais para o gráfico do dashboard
     total_d = sum(float(l.get('valor', 0)) for l in lancamentos if l.get('tipo') == 'D')
     total_c = sum(float(l.get('valor', 0)) for l in lancamentos if l.get('tipo') == 'C')
 
-    return render_template('dashboard.html', usuario=session['usuario'], contas=contas, total_d=total_d, total_c=total_c)
+    return render_template('dashboard.html', usuario=session.get('usuario'), contas=contas, total_d=total_d, total_c=total_c)
 
 @app.route('/cadastro', methods=['GET', 'POST'])
 def cadastro():
-    if 'usuario' not in session or session['usuario'] != 'admin':
+    if 'usuario' not in session or session.get('usuario') != 'admin':
         flash('Acesso não autorizado.', 'danger')
         return redirect(url_for('login'))
 
@@ -140,18 +129,16 @@ def cadastro():
             usuarios[novo_usuario] = nova_senha
             salvar_usuarios(usuarios)
             flash(f'Usuário {novo_usuario} cadastrado com sucesso!', 'success')
-            return redirect(url_for('dashboard')) # Ou para uma página de gerenciamento de usuários
-    return render_template('cadastro.html', usuario=session['usuario'])
-
+            return redirect(url_for('dashboard'))
+    return render_template('cadastro.html', usuario=session.get('usuario'))
 
 @app.route('/diario')
 def diario():
     if 'usuario' not in session:
         return redirect(url_for('login'))
     lancamentos = carregar_dados(ARQUIVO_LANCAMENTOS)
-    # Ordenar lançamentos por data para o livro diário (do mais antigo para o mais novo)
     lancamentos_ordenados = sorted(lancamentos, key=lambda x: datetime.strptime(x['data'], '%Y-%m-%d %H:%M:%S'))
-    return render_template('diario.html', lancamentos=lancamentos_ordenados, usuario=session['usuario'])
+    return render_template('diario.html', lancamentos=lancamentos_ordenados, usuario=session.get('usuario'))
 
 @app.route('/razao')
 def razao():
@@ -168,16 +155,19 @@ def razao():
             'lancamentos': [],
             'saldo_devedor': 0.0,
             'saldo_credor': 0.0,
-            'saldo_final': 0.0
+            'saldo_final': 0.0 # Será calculado com base na natureza da conta para um balancete mais preciso
         }
 
-    # Ordenar lançamentos por data antes de processar o razão
     lancamentos_ordenados = sorted(lancamentos, key=lambda x: datetime.strptime(x['data'], '%Y-%m-%d %H:%M:%S'))
 
     for lanc in lancamentos_ordenados:
         cod_conta_lanc = lanc.get('conta_cod')
         if cod_conta_lanc in razao_por_conta:
-            valor = float(lanc.get('valor', 0))
+            try:
+                valor = float(lanc.get('valor', 0))
+            except ValueError:
+                valor = 0.0 # Ignora valor não numérico
+
             razao_por_conta[cod_conta_lanc]['lancamentos'].append(lanc)
             if lanc.get('tipo') == 'D':
                 razao_por_conta[cod_conta_lanc]['saldo_devedor'] += valor
@@ -185,14 +175,13 @@ def razao():
                 razao_por_conta[cod_conta_lanc]['saldo_credor'] += valor
     
     for cod_conta in razao_por_conta:
-        # Saldo = Credor - Devedor (convenção comum, mas depende da natureza da conta)
-        # Para contas de Ativo e Despesa: Saldo Devedor (Débitos > Créditos)
-        # Para contas de Passivo, PL e Receita: Saldo Credor (Créditos > Débitos)
-        # A lógica abaixo é um saldo genérico. Para um balancete correto, a natureza da conta importa.
-        razao_por_conta[cod_conta]['saldo_final'] = razao_por_conta[cod_conta]['saldo_devedor'] - razao_por_conta[cod_conta]['saldo_credor']
+        # Lógica simplificada do saldo. Para contabilidade correta, a natureza da conta é crucial.
+        # Saldo Devedor = Débitos > Créditos
+        # Saldo Credor = Créditos > Débitos
+        saldo_calc = razao_por_conta[cod_conta]['saldo_devedor'] - razao_por_conta[cod_conta]['saldo_credor']
+        razao_por_conta[cod_conta]['saldo_final'] = saldo_calc # Pode ser positivo (devedor) ou negativo (credor)
 
-
-    return render_template('razao.html', razao_contas=razao_por_conta, usuario=session['usuario'])
+    return render_template('razao.html', razao_contas=razao_por_conta, usuario=session.get('usuario'))
 
 @app.route('/balancete')
 def balancete():
@@ -200,46 +189,46 @@ def balancete():
         return redirect(url_for('login'))
 
     lancamentos = carregar_dados(ARQUIVO_LANCAMENTOS)
-    contas = carregar_contas() # Assume que contas.json tem { "cod": "Nome da Conta", "natureza": "D/C" }
+    contas = carregar_contas()
     
     saldos_contas = {}
     for cod, nome in contas.items():
+        # Inicializa com a estrutura esperada pelo template
         saldos_contas[cod] = {'nome': nome, 'debito': 0.0, 'credito': 0.0, 'saldo_devedor': 0.0, 'saldo_credor': 0.0}
 
     for lanc in lancamentos:
         cod_conta = lanc.get('conta_cod')
         if cod_conta in saldos_contas:
-            valor = float(lanc.get('valor', 0))
+            try:
+                valor = float(lanc.get('valor', 0))
+            except ValueError:
+                valor = 0.0
+
             if lanc.get('tipo') == 'D':
                 saldos_contas[cod_conta]['debito'] += valor
             elif lanc.get('tipo') == 'C':
                 saldos_contas[cod_conta]['credito'] += valor
     
-    total_debito_geral = 0
-    total_credito_geral = 0
+    total_saldo_devedor_geral = 0
+    total_saldo_credor_geral = 0
 
     for cod, dados_conta in saldos_contas.items():
         saldo = dados_conta['debito'] - dados_conta['credito']
-        # A natureza da conta (devedora ou credora) determinaria onde o saldo final aparece.
-        # Exemplo simples: se saldo > 0 é devedor, se saldo < 0 é credor (invertido).
-        # Para um balancete correto, você precisaria da natureza da conta (Ativo/Passivo/PL/Receita/Despesa)
-        # e se o saldo normal dela é Devedor ou Credor.
-        # Este é um cálculo simplificado:
         if saldo > 0:
             dados_conta['saldo_devedor'] = saldo
-            total_debito_geral += saldo
+            total_saldo_devedor_geral += saldo
         elif saldo < 0:
-            dados_conta['saldo_credor'] = abs(saldo) # Saldo credor é positivo
-            total_credito_geral += abs(saldo)
-        # Se saldo == 0, ambos os saldos finais são 0
+            dados_conta['saldo_credor'] = abs(saldo)
+            total_saldo_credor_geral += abs(saldo)
+        # Se saldo == 0, ambos os saldos finais são 0, já inicializados
 
     return render_template('balancete.html', 
                            saldos_contas=saldos_contas, 
-                           total_debitos=total_debito_geral, 
-                           total_creditos=total_credito_geral, 
-                           usuario=session['usuario'])
+                           total_debitos=total_saldo_devedor_geral, # Nome da variável no template
+                           total_creditos=total_saldo_credor_geral, # Nome da variável no template
+                           usuario=session.get('usuario'))
 
-# --- NOVA ROTA PARA O GRÁFICO POR DATA ---
+# --- NOVA ROTA PARA O GRÁFICO POR DATA (COM DEBUG PRINTS) ---
 @app.route('/grafico_data', methods=['GET', 'POST'])
 def grafico_data():
     if 'usuario' not in session:
@@ -247,24 +236,26 @@ def grafico_data():
 
     lancamentos_todos = carregar_dados(ARQUIVO_LANCAMENTOS)
     dados_grafico = {
-        'labels': [],    # Dias (ex: '01/06/2025')
-        'debitos': [],   # Total de débitos por dia
-        'creditos': [],  # Total de créditos por dia
-        'saldos': []     # Saldo acumulado por dia
+        'labels': [],
+        'debitos': [],
+        'creditos': [],
+        'saldos': []
     }
-    data_inicio_selecionada = ""
-    data_fim_selecionada = ""
+    data_inicio_selecionada = "" # Para manter o valor no formulário
+    data_fim_selecionada = ""    # Para manter o valor no formulário
 
     if request.method == 'POST':
         data_inicio_str = request.form.get('data_inicio')
         data_fim_str = request.form.get('data_fim')
-        data_inicio_selecionada = data_inicio_str # Para reenviar ao template
-        data_fim_selecionada = data_fim_str   # Para reenviar ao template
+        data_inicio_selecionada = data_inicio_str
+        data_fim_selecionada = data_fim_str
+
+        print(f"--- DEBUG: Recebido data_inicio: {data_inicio_str}, data_fim: {data_fim_str} ---") # DEBUG
 
         if data_inicio_str and data_fim_str:
             try:
-                data_inicio_obj = datetime.strptime(data_inicio_str, '%Y-%m-%d').date() # Pega só a data
-                data_fim_obj = datetime.strptime(data_fim_str, '%Y-%m-%d').date()     # Pega só a data
+                data_inicio_obj = datetime.strptime(data_inicio_str, '%Y-%m-%d').date()
+                data_fim_obj = datetime.strptime(data_fim_str, '%Y-%m-%d').date()
 
                 if data_inicio_obj > data_fim_obj:
                     flash('A data de início não pode ser posterior à data de fim.', 'warning')
@@ -274,82 +265,74 @@ def grafico_data():
                         data_lanc_str_completa = lanc.get('data', '')
                         if data_lanc_str_completa:
                             try:
-                                # Converte a data/hora do lançamento para apenas data
                                 data_lanc_obj = datetime.strptime(data_lanc_str_completa, '%Y-%m-%d %H:%M:%S').date()
                                 if data_inicio_obj <= data_lanc_obj <= data_fim_obj:
                                     lancamentos_filtrados_periodo.append(lanc)
                             except ValueError:
-                                print(f"Aviso: Lançamento com data em formato inválido ignorado: {lanc}")
-                                continue # Ignora lançamentos com formato de data/hora inválido
+                                print(f"AVISO: Lançamento com data em formato inválido ignorado: {lanc.get('id', 'ID Desconhecido')}")
+                                continue
                     
-                    # Agrupar dados por dia para o gráfico
-                    dados_por_dia = {} # Chave: 'YYYY-MM-DD', Valor: {'debitos': 0, 'creditos': 0}
-                    
-                    # Ordenar por data para processamento cronológico (importante para saldo acumulado)
+                    # print(f"--- DEBUG: Lançamentos filtrados: {lancamentos_filtrados_periodo} ---") # DEBUG (pode ser muito longo)
+
+                    dados_por_dia = {}
                     lancamentos_filtrados_periodo.sort(key=lambda x: datetime.strptime(x.get('data'), '%Y-%m-%d %H:%M:%S').date())
 
-                    # Gerar um range de todas as datas no período para garantir que todos os dias apareçam no gráfico
-                    # mesmo que não tenham lançamentos.
-                    current_date = data_inicio_obj
-                    while current_date <= data_fim_obj:
-                        dia_str_chave = current_date.strftime('%Y-%m-%d')
+                    current_date_iter = data_inicio_obj
+                    while current_date_iter <= data_fim_obj:
+                        dia_str_chave = current_date_iter.strftime('%Y-%m-%d')
                         dados_por_dia[dia_str_chave] = {'debitos': 0, 'creditos': 0}
-                        current_date += timedelta(days=1)
-
+                        current_date_iter += timedelta(days=1) # timedelta agora está importado
 
                     for lanc in lancamentos_filtrados_periodo:
                         dia_str_chave = datetime.strptime(lanc.get('data'), '%Y-%m-%d %H:%M:%S').strftime('%Y-%m-%d')
-                        
-                        valor_lanc = 0
+                        valor_lanc = 0.0
                         try:
                             valor_lanc = float(lanc.get('valor', 0))
                         except ValueError:
-                            pass # Ignora valor inválido
-
-                        if lanc.get('tipo') == 'D':
-                            dados_por_dia[dia_str_chave]['debitos'] += valor_lanc
-                        elif lanc.get('tipo') == 'C':
-                            dados_por_dia[dia_str_chave]['creditos'] += valor_lanc
+                             print(f"AVISO: Valor de lançamento inválido ignorado: {lanc.get('id', 'ID Desconhecido')}")
+                        
+                        if dia_str_chave in dados_por_dia: # Garante que o dia existe no dict
+                            if lanc.get('tipo') == 'D':
+                                dados_por_dia[dia_str_chave]['debitos'] += valor_lanc
+                            elif lanc.get('tipo') == 'C':
+                                dados_por_dia[dia_str_chave]['creditos'] += valor_lanc
                     
-                    # Preparar dados para Chart.js, ordenando pelos dias
-                    saldo_acumulado_grafico = 0
+                    saldo_acumulado_grafico = 0.0
                     dias_ordenados_grafico = sorted(dados_por_dia.keys())
 
                     for dia_str_grafico in dias_ordenados_grafico:
-                        dados_grafico['labels'].append(datetime.strptime(dia_str_grafico, '%Y-%m-%d').strftime('%d/%m')) # Formato DD/MM
+                        dados_grafico['labels'].append(datetime.strptime(dia_str_grafico, '%Y-%m-%d').strftime('%d/%m'))
                         dados_grafico['debitos'].append(dados_por_dia[dia_str_grafico]['debitos'])
                         dados_grafico['creditos'].append(dados_por_dia[dia_str_grafico]['creditos'])
                         
                         saldo_dia_atual = dados_por_dia[dia_str_grafico]['creditos'] - dados_por_dia[dia_str_grafico]['debitos']
                         saldo_acumulado_grafico += saldo_dia_atual
                         dados_grafico['saldos'].append(round(saldo_acumulado_grafico, 2))
+                    
+                    print(f"--- DEBUG: Dados para o gráfico (final): {dados_grafico} ---") # DEBUG
 
-            except ValueError:
+            except ValueError as e:
                 flash('Formato de data inválido. Use o formato AAAA-MM-DD.', 'danger')
+                print(f"ERRO: ValueError ao processar datas - {e}") # DEBUG
         else:
             flash('Por favor, selecione a data de início e a data de fim.', 'warning')
+            print("AVISO: Datas não fornecidas no POST.") # DEBUG
 
     return render_template('grafico_data.html', 
-                           usuario=session['usuario'], 
+                           usuario=session.get('usuario'), 
                            dados_grafico=dados_grafico,
-                           data_inicio=data_inicio_selecionada, # Para preencher o formulário
-                           data_fim=data_fim_selecionada)   # Para preencher o formulário
-
+                           data_inicio=data_inicio_selecionada,
+                           data_fim=data_fim_selecionada)
 
 if __name__ == '__main__':
-    # Cria os arquivos JSON se não existirem, para evitar erros na primeira execução
     if not os.path.exists(ARQUIVO_USUARIOS):
-        salvar_dados({'admin': 'admin'}, ARQUIVO_USUARIOS) # Usuário admin padrão
+        salvar_dados({'admin': 'admin'}, ARQUIVO_USUARIOS)
     if not os.path.exists(ARQUIVO_LANCAMENTOS):
         salvar_dados([], ARQUIVO_LANCAMENTOS)
     if not os.path.exists(ARQUIVO_CONTAS):
-        # Exemplo de plano de contas inicial
         plano_de_contas_inicial = {
-            "101": "Caixa",
-            "102": "Bancos Conta Movimento",
-            "201": "Fornecedores",
-            "301": "Receita de Vendas",
-            "401": "Despesas com Aluguel"
+            "101": "Caixa", "102": "Bancos Conta Movimento", "201": "Fornecedores",
+            "301": "Receita de Vendas", "401": "Despesas com Aluguel"
         }
         salvar_dados(plano_de_contas_inicial, ARQUIVO_CONTAS)
 
