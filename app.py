@@ -612,7 +612,74 @@ def razao_exportar_pdf():
     response.headers['Content-Type'] = 'application/pdf'
     response.headers['Content-Disposition'] = f'attachment; filename=livro_razao_{id_empresa_atual}_{datetime.now().strftime("%Y%m%d_%H%M%S")}.pdf'
     return response
+    
+@app.route('/balancete')
+def balancete():
+    if not verificar_sessao_empresa(): # Função para verificar se o utilizador está logado
+        return redirect(url_for('login'))
+    
+    id_empresa_atual = session['id_empresa']
+    lancamentos = carregar_lancamentos_empresa(id_empresa_atual)
+    contas = carregar_contas_empresa(id_empresa_atual)
+    
+    saldos_contas_dict = {} # Usar um nome diferente para evitar conflito com a variável 'contas'
+    for cod, nome_conta_obj_ou_str in contas.items():
+        # Lida com o facto de 'contas' poder ter o nome diretamente ou um dicionário com 'nome' e 'natureza'
+        nome_conta_str = nome_conta_obj_ou_str if isinstance(nome_conta_obj_ou_str, str) else nome_conta_obj_ou_str.get('nome', 'Desconhecida')
+        saldos_contas_dict[cod] = {
+            'nome': nome_conta_str, 
 
+            'debito': 0.0, 
+            'credito': 0.0, 
+            'saldo_devedor': 0.0, 
+            'saldo_credor': 0.0,
+            'natureza': nome_conta_obj_ou_str.get('natureza', 'D') if isinstance(nome_conta_obj_ou_str, dict) else 'D' # Assume 'D' se não for dict
+        }
+
+    for lanc in lancamentos:
+        cod_conta = lanc.get('conta_cod')
+        if cod_conta in saldos_contas_dict:
+            try:
+                valor = float(lanc.get('valor', 0))
+            except ValueError: 
+                valor = 0.0 # Ignora valores não numéricos
+            
+            if lanc.get('tipo') == 'D': 
+                saldos_contas_dict[cod_conta]['debito'] += valor
+            elif lanc.get('tipo') == 'C': 
+                saldos_contas_dict[cod_conta]['credito'] += valor
+    
+    total_saldo_devedor_geral = 0.0
+    total_saldo_credor_geral = 0.0
+    
+    for cod, dados_conta in saldos_contas_dict.items():
+        saldo_calculado = dados_conta['debito'] - dados_conta['credito']
+        natureza_conta = dados_conta.get('natureza', 'D') # Pega a natureza da conta
+
+        # Reinicializa saldos devedor/credor para cálculo correto baseado na natureza
+        dados_conta['saldo_devedor'] = 0.0
+        dados_conta['saldo_credor'] = 0.0
+
+        if natureza_conta == 'D': # Contas de natureza Devedora (Ativo, Despesa)
+            if saldo_calculado >= 0: # Saldo devedor é o esperado
+                dados_conta['saldo_devedor'] = saldo_calculado
+            else: # Saldo credor em conta de natureza devedora (ex: caixa negativo, provisão excessiva)
+                dados_conta['saldo_credor'] = abs(saldo_calculado) 
+        elif natureza_conta == 'C': # Contas de natureza Credora (Passivo, PL, Receita)
+            if saldo_calculado <= 0: # Saldo credor é o esperado (D-C será negativo)
+                dados_conta['saldo_credor'] = abs(saldo_calculado)
+            else: # Saldo devedor em conta de natureza credora
+                dados_conta['saldo_devedor'] = saldo_calculado
+        
+        total_saldo_devedor_geral += dados_conta['saldo_devedor']
+        total_saldo_credor_geral += dados_conta['saldo_credor']
+            
+    return render_template('balancete.html', 
+                           saldos_contas=saldos_contas_dict, 
+                           total_debitos=total_saldo_devedor_geral, # No template, estes são os totais dos saldos
+                           total_creditos=total_saldo_credor_geral, # No template, estes são os totais dos saldos
+                           usuario=session.get('usuario'), 
+                           nome_empresa=session.get('nome_empresa'))
 # --- NOVA ROTA: Exportar Balancete para PDF ---
 @app.route('/balancete/exportar_pdf')
 def balancete_exportar_pdf():
