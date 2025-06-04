@@ -17,14 +17,26 @@
             </div>
         </div>
 
-        <!-- Botão de Exportação PDF -->
         <div class="mb-3 px-3">
             <a href="{{ url_for('razao_exportar_pdf') }}" class="btn btn-danger btn-sm">Exportar para PDF</a>
         </div>
 
-        {% if razao_contas and any(dados_c.lancamentos for dados_c in razao_contas.values()) %}
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }} alert-dismissible fade show mx-3" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Fechar"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        {% if razao_contas %} {# Verifica apenas se razao_contas existe e não é vazio #}
+            {% set encontrou_lancamentos_em_alguma_conta = namespace(valor=false) %}
             {% for conta_cod, dados_conta in razao_contas.items() %}
-                {% if dados_conta.lancamentos %} {# Só mostra o card se a conta tiver lançamentos #}
+                {% if dados_conta.get('lancamentos') %} {# Verifica se esta conta específica tem lançamentos #}
+                    {% set encontrou_lancamentos_em_alguma_conta.valor = true %}
                     <div class="card shadow-sm mb-4">
                         <div class="card-header bg-primary text-white">
                             <h5 class="mb-0">Conta: {{ dados_conta.nome }} ({{ conta_cod }})</h5>
@@ -43,22 +55,22 @@
                                     </thead>
                                     <tbody>
                                         {% set saldo_acumulado_temp = namespace(valor=0.0) %}
-                                        {% for lanc in dados_conta.lancamentos %}
-                                            {% set valor_lancamento = lanc.valor | default(0.0) | float %}
-                                            {% if lanc.tipo == 'D' %}
+                                        {% for lanc in dados_conta.get('lancamentos', []) %}
+                                            {% set valor_lancamento = lanc.get('valor') | default(0.0) | float %}
+                                            {% if lanc.get('tipo') == 'D' %}
                                                 {% set saldo_acumulado_temp.valor = saldo_acumulado_temp.valor + valor_lancamento %}
-                                            {% elif lanc.tipo == 'C' %}
+                                            {% elif lanc.get('tipo') == 'C' %}
                                                 {% set saldo_acumulado_temp.valor = saldo_acumulado_temp.valor - valor_lancamento %}
                                             {% endif %}
                                             {% set saldo_apos_lancamento = saldo_acumulado_temp.valor %}
                                         <tr>
-                                            <td>{{ lanc.data.split(' ')[0] }}</td>
-                                            <td>{{ lanc.historico }}</td>
+                                            <td>{{ lanc.get('data', '').split(' ')[0] }}</td>
+                                            <td>{{ lanc.get('historico', '') }}</td>
                                             <td class="text-end">
-                                                {% if lanc.tipo == 'D' %}{{ "%.2f"|format(valor_lancamento) }}{% endif %}
+                                                {% if lanc.get('tipo') == 'D' %}{{ "%.2f"|format(valor_lancamento) }}{% endif %}
                                             </td>
                                             <td class="text-end">
-                                                {% if lanc.tipo == 'C' %}{{ "%.2f"|format(valor_lancamento) }}{% endif %}
+                                                {% if lanc.get('tipo') == 'C' %}{{ "%.2f"|format(valor_lancamento) }}{% endif %}
                                             </td>
                                             <td class="text-end">{{ "%.2f"|format(saldo_apos_lancamento) }}</td>
                                         </tr>
@@ -68,18 +80,25 @@
                             </div>
                         </div>
                         <div class="card-footer text-end">
-                            <strong>Débitos Totais:</strong> R$ {{ "%.2f"|format(dados_conta.saldo_devedor | default(0.0)) }} |
-                            <strong>Créditos Totais:</strong> R$ {{ "%.2f"|format(dados_conta.saldo_credor | default(0.0)) }} |
-                            <strong>Saldo Final da Conta: R$ {{ "%.2f"|format(dados_conta.saldo_final | default(0.0)) }}
-                                ({{ 'Devedor' if (dados_conta.saldo_final | default(0.0)) >= 0 else 'Credor (' + "%.2f"|format((dados_conta.saldo_final | default(0.0))|abs) + ')' }})
+                            <strong>Débitos Totais:</strong> R$ {{ "%.2f"|format(dados_conta.get('saldo_devedor') | default(0.0)) }} |
+                            <strong>Créditos Totais:</strong> R$ {{ "%.2f"|format(dados_conta.get('saldo_credor') | default(0.0)) }} |
+                            <strong>Saldo Final da Conta: R$ {{ "%.2f"|format(dados_conta.get('saldo_final') | default(0.0)) }}
+                                ({{ 'Devedor' if (dados_conta.get('saldo_final') | default(0.0)) >= 0 else 'Credor (' + "%.2f"|format((dados_conta.get('saldo_final') | default(0.0))|abs) + ')' }})
                             </strong>
                         </div>
                     </div>
                 {% endif %}
             {% endfor %}
-        {% else %}
+
+            {# Exibir mensagem se nenhuma conta teve lançamentos, mesmo que razao_contas exista #}
+            {% if not encontrou_lancamentos_em_alguma_conta.valor %}
+                 <div class="alert alert-info mx-3" role="alert">
+                    Nenhuma conta com lançamentos para exibir no Livro Razão.
+                </div>
+            {% endif %}
+        {% else %} {# Se razao_contas estiver vazio ou for None #}
             <div class="alert alert-info mx-3" role="alert">
-                Nenhuma conta com lançamentos para exibir no Livro Razão.
+                Nenhuma conta para exibir no Livro Razão.
             </div>
         {% endif %}
     </div>

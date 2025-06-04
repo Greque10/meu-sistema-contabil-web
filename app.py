@@ -504,25 +504,25 @@ def razao_exportar_pdf():
     # Reutilizar a lógica da rota /razao para obter os dados
     lancamentos = carregar_lancamentos_empresa(id_empresa_atual)
     contas = carregar_contas_empresa(id_empresa_atual)
-    razao_por_conta = {} # Este será o dicionário final passado para a lógica do PDF
+    razao_por_conta_dados = {} 
     for cod_conta, nome_conta_obj_ou_str in contas.items():
         nome_conta_str = nome_conta_obj_ou_str if isinstance(nome_conta_obj_ou_str, str) else nome_conta_obj_ou_str.get('nome', 'Desconhecida')
-        razao_por_conta[cod_conta] = {
+        razao_por_conta_dados[cod_conta] = {
             'nome': nome_conta_str, 'lancamentos': [],
             'saldo_devedor': 0.0, 'saldo_credor': 0.0, 'saldo_final': 0.0
         }
     lancamentos_ordenados = sorted(lancamentos, key=lambda x: datetime.strptime(x.get('data', '1900-01-01 00:00:00'), '%Y-%m-%d %H:%M:%S'))
     for lanc in lancamentos_ordenados:
         cod_conta_lanc = lanc.get('conta_cod')
-        if cod_conta_lanc in razao_por_conta:
+        if cod_conta_lanc in razao_por_conta_dados:
             try:
                 valor = float(lanc.get('valor', 0))
             except ValueError: valor = 0.0
-            razao_por_conta[cod_conta_lanc]['lancamentos'].append(lanc) # Adiciona o lançamento completo
-            if lanc.get('tipo') == 'D': razao_por_conta[cod_conta_lanc]['saldo_devedor'] += valor
-            elif lanc.get('tipo') == 'C': razao_por_conta[cod_conta_lanc]['saldo_credor'] += valor
-    for cod_conta_calc_final in razao_por_conta: # Renomeada variável do loop para evitar confusão
-        razao_por_conta[cod_conta_calc_final]['saldo_final'] = razao_por_conta[cod_conta_calc_final]['saldo_devedor'] - raza_por_conta[cod_conta_calc_final]['saldo_credor']
+            razao_por_conta_dados[cod_conta_lanc]['lancamentos'].append(lanc) # Adiciona o lançamento completo
+            if lanc.get('tipo') == 'D': razao_por_conta_dados[cod_conta_lanc]['saldo_devedor'] += valor
+            elif lanc.get('tipo') == 'C': razao_por_conta_dados[cod_conta_lanc]['saldo_credor'] += valor
+    for cod_conta_calc_final in razao_por_conta_dados: 
+        razao_por_conta_dados[cod_conta_calc_final]['saldo_final'] = razao_por_conta_dados[cod_conta_calc_final]['saldo_devedor'] - razao_por_conta_dados[cod_conta_calc_final]['saldo_credor']
 
     buffer = io.BytesIO()
     doc = SimpleDocTemplate(buffer, pagesize=A4, rightMargin=1.5*cm, leftMargin=1.5*cm, topMargin=1.8*cm, bottomMargin=1.8*cm)
@@ -537,7 +537,9 @@ def razao_exportar_pdf():
     style_rodape_conta = ParagraphStyle('RodapeConta', parent=styles['Normal'], fontSize=9, alignment=TA_RIGHT, spaceBefore=0.2*cm, leading=12)
 
     alguma_conta_com_lancamento = False
-    for conta_cod_pdf, dados_conta_pdf in razao_por_conta.items(): # Renomeadas variáveis do loop
+    # Iterar sobre as chaves ordenadas do dicionário de contas para uma ordem consistente no PDF
+    for conta_cod_pdf in sorted(razao_por_conta_dados.keys()):
+        dados_conta_pdf = razao_por_conta_dados[conta_cod_pdf]
         if not dados_conta_pdf.get('lancamentos'):
             continue
         alguma_conta_com_lancamento = True
@@ -553,19 +555,16 @@ def razao_exportar_pdf():
         ]]
         
         saldo_corrente_pdf = 0.0
-        # Ordenar lançamentos da conta específica por data (já devem estar ordenados globalmente)
-        for lanc_pdf in dados_conta_pdf['lancamentos']: # Renomeada variável do loop
+        for lanc_pdf in dados_conta_pdf['lancamentos']: 
             valor_lanc_pdf = float(lanc_pdf.get('valor', 0.0))
             debito_str = f"{valor_lanc_pdf:.2f}" if lanc_pdf.get('tipo') == 'D' else ''
             credito_str = f"{valor_lanc_pdf:.2f}" if lanc_pdf.get('tipo') == 'C' else ''
             
-            # Lógica de saldo para Razão: Débito aumenta, Crédito diminui (para contas de natureza Devedora)
-            # Para uma representação contábil mais precisa, a natureza da conta deveria inverter isso para contas Credoras.
-            # Aqui, vamos manter D-C para o saldo corrente, e o saldo final da conta já é D-C.
+            # Lógica de saldo para Razão (D aumenta, C diminui o saldo exibido)
             if lanc_pdf.get('tipo') == 'D':
                 saldo_corrente_pdf += valor_lanc_pdf
             elif lanc_pdf.get('tipo') == 'C':
-                saldo_corrente_pdf -= valor_lanc_pdf # Subtrai créditos para saldo devedor
+                saldo_corrente_pdf -= valor_lanc_pdf 
             
             data_formatada = datetime.strptime(lanc_pdf.get('data', '1900-01-01 00:00:00').split(' ')[0], '%Y-%m-%d').strftime('%d/%m/%Y')
             historico_paragrafo = Paragraph(lanc_pdf.get('historico', ''), style_texto_tabela_historico)
@@ -592,12 +591,17 @@ def razao_exportar_pdf():
         tabela_conta.setStyle(estilo_tabela_conta)
         story.append(tabela_conta)
         
-        saldo_final_conta = dados_conta_pdf['saldo_final']
-        natureza_saldo_final = 'Devedor' if saldo_final_conta >= 0 else f'Credor ({abs(saldo_final_conta):.2f})'
-        if saldo_final_conta < 0: saldo_final_conta = abs(saldo_final_conta) # Para exibir positivo se credor
+        saldo_final_conta_val = dados_conta_pdf['saldo_final']
+        natureza_conta_atual = contas.get(conta_cod_pdf, {}).get('natureza', 'D') 
+        
+        saldo_final_str = ""
+        if natureza_conta_atual == 'D':
+            saldo_final_str = f"Devedor {saldo_final_conta_val:.2f}" if saldo_final_conta_val >= 0 else f"Credor {abs(saldo_final_conta_val):.2f} (Natureza Invertida)"
+        else: # Natureza 'C'
+             saldo_final_str = f"Credor {abs(saldo_final_conta_val):.2f}" if saldo_final_conta_val <= 0 else f"Devedor {saldo_final_conta_val:.2f} (Natureza Invertida)"
 
-        story.append(Paragraph(f"<b>Saldo Final da Conta: R$ {saldo_final_conta:.2f} ({natureza_saldo_final})</b>", style_rodape_conta))
-        story.append(PageBreak()) # Quebra de página após cada conta do razão
+        story.append(Paragraph(f"<b>Saldo Final da Conta: R$ {saldo_final_str}</b>", style_rodape_conta))
+        story.append(PageBreak()) 
 
     if not alguma_conta_com_lancamento:
         story.append(Paragraph("Nenhum lançamento encontrado para as contas neste período.", styles['Normal']))
@@ -608,40 +612,6 @@ def razao_exportar_pdf():
     response.headers['Content-Type'] = 'application/pdf'
     response.headers['Content-Disposition'] = f'attachment; filename=livro_razao_{id_empresa_atual}_{datetime.now().strftime("%Y%m%d_%H%M%S")}.pdf'
     return response
-
-@app.route('/balancete')
-def balancete():
-    if not verificar_sessao_empresa():
-        return redirect(url_for('login'))
-    id_empresa_atual = session['id_empresa']
-    lancamentos = carregar_lancamentos_empresa(id_empresa_atual)
-    contas = carregar_contas_empresa(id_empresa_atual)
-    saldos_contas = {}
-    for cod, nome_conta_obj_ou_str in contas.items():
-        nome_conta_str = nome_conta_obj_ou_str if isinstance(nome_conta_obj_ou_str, str) else nome_conta_obj_ou_str.get('nome', 'Desconhecida')
-        saldos_contas[cod] = {'nome': nome_conta_str, 'debito': 0.0, 'credito': 0.0, 'saldo_devedor': 0.0, 'saldo_credor': 0.0}
-    for lanc in lancamentos:
-        cod_conta = lanc.get('conta_cod')
-        if cod_conta in saldos_contas:
-            try:
-                valor = float(lanc.get('valor', 0))
-            except ValueError: valor = 0.0
-            if lanc.get('tipo') == 'D': saldos_contas[cod_conta]['debito'] += valor
-            elif lanc.get('tipo') == 'C': saldos_contas[cod_conta]['credito'] += valor
-    total_saldo_devedor_geral = 0.0
-    total_saldo_credor_geral = 0.0
-    for cod, dados_conta in saldos_contas.items():
-        saldo = dados_conta['debito'] - dados_conta['credito']
-        if saldo > 0:
-            dados_conta['saldo_devedor'] = saldo
-            total_saldo_devedor_geral += saldo
-        elif saldo < 0:
-            dados_conta['saldo_credor'] = abs(saldo)
-            total_saldo_credor_geral += abs(saldo)
-    return render_template('balancete.html', saldos_contas=saldos_contas, 
-                           total_debitos=total_saldo_devedor_geral, 
-                           total_creditos=total_saldo_credor_geral, 
-                           usuario=session.get('usuario'), nome_empresa=session.get('nome_empresa'))
 
 # --- NOVA ROTA: Exportar Balancete para PDF ---
 @app.route('/balancete/exportar_pdf')
@@ -654,10 +624,13 @@ def balancete_exportar_pdf():
     # Reutilizar a lógica da rota /balancete para obter os dados
     lancamentos = carregar_lancamentos_empresa(id_empresa_atual)
     contas = carregar_contas_empresa(id_empresa_atual)
-    saldos_contas_dict = {} # Renomeado para evitar conflito de nome
+    saldos_contas_dict = {} 
     for cod, nome_conta_obj_ou_str in contas.items():
         nome_conta_str = nome_conta_obj_ou_str if isinstance(nome_conta_obj_ou_str, str) else nome_conta_obj_ou_str.get('nome', 'Desconhecida')
-        saldos_contas_dict[cod] = {'nome': nome_conta_str, 'debito': 0.0, 'credito': 0.0, 'saldo_devedor': 0.0, 'saldo_credor': 0.0}
+        saldos_contas_dict[cod] = {'nome': nome_conta_str, 
+                                   'debito': 0.0, 'credito': 0.0, 
+                                   'saldo_devedor': 0.0, 'saldo_credor': 0.0, 
+                                   'natureza': nome_conta_obj_ou_str.get('natureza', 'D') if isinstance(nome_conta_obj_ou_str, dict) else 'D'}
     for lanc in lancamentos:
         cod_conta = lanc.get('conta_cod')
         if cod_conta in saldos_contas_dict:
@@ -666,22 +639,30 @@ def balancete_exportar_pdf():
             except ValueError: valor = 0.0
             if lanc.get('tipo') == 'D': saldos_contas_dict[cod_conta]['debito'] += valor
             elif lanc.get('tipo') == 'C': saldos_contas_dict[cod_conta]['credito'] += valor
-    total_saldo_devedor_geral_pdf = 0.0 # Renomeado para evitar conflito
-    total_saldo_credor_geral_pdf = 0.0  # Renomeado para evitar conflito
     
-    contas_para_pdf = [] # Lista para manter a ordem e filtrar contas sem movimento
-    for cod, dados_conta in saldos_contas_dict.items():
-        saldo = dados_conta['debito'] - dados_conta['credito']
-        if saldo > 0:
-            dados_conta['saldo_devedor'] = saldo
-            total_saldo_devedor_geral_pdf += saldo
-        elif saldo < 0:
-            dados_conta['saldo_credor'] = abs(saldo)
-            total_saldo_credor_geral_pdf += abs(saldo)
-        # Apenas incluir contas com movimento ou saldo no PDF
-        if dados_conta['debito'] != 0 or dados_conta['credito'] != 0 or dados_conta['saldo_devedor'] != 0 or dados_conta['saldo_credor'] != 0:
-            contas_para_pdf.append({'codigo': cod, **dados_conta})
+    total_saldo_devedor_geral_pdf = 0.0
+    total_saldo_credor_geral_pdf = 0.0  
+    contas_para_pdf = [] 
+    for cod_conta_ordenada in sorted(saldos_contas_dict.keys()): # Ordenar contas
+        dados_conta = saldos_contas_dict[cod_conta_ordenada]
+        saldo_calculado = dados_conta['debito'] - dados_conta['credito']
+        natureza_conta = dados_conta.get('natureza', 'D')
 
+        dados_conta['saldo_devedor'] = 0.0 # Reinicializa para cálculo correto
+        dados_conta['saldo_credor'] = 0.0  # Reinicializa para cálculo correto
+
+        if natureza_conta == 'D':
+            if saldo_calculado >= 0: dados_conta['saldo_devedor'] = saldo_calculado
+            else: dados_conta['saldo_credor'] = abs(saldo_calculado)
+        elif natureza_conta == 'C':
+            if saldo_calculado <= 0: dados_conta['saldo_credor'] = abs(saldo_calculado)
+            else: dados_conta['saldo_devedor'] = saldo_calculado
+        
+        total_saldo_devedor_geral_pdf += dados_conta['saldo_devedor']
+        total_saldo_credor_geral_pdf += dados_conta['saldo_credor']
+        
+        if dados_conta['debito'] != 0 or dados_conta['credito'] != 0 or dados_conta['saldo_devedor'] != 0 or dados_conta['saldo_credor'] != 0:
+            contas_para_pdf.append({'codigo': cod_conta_ordenada, **dados_conta})
 
     buffer = io.BytesIO()
     doc = SimpleDocTemplate(buffer, pagesize=A4, rightMargin=1.5*cm, leftMargin=1.5*cm, topMargin=1.8*cm, bottomMargin=1.8*cm)
@@ -692,36 +673,37 @@ def balancete_exportar_pdf():
     style_texto_tabela_normal = ParagraphStyle('TextoTabelaNormal', parent=styles['Normal'], fontSize=8, leading=10)
     style_texto_tabela_direita = ParagraphStyle('TextoTabelaDireita', parent=styles['Normal'], fontSize=8, alignment=TA_RIGHT, leading=10)
 
-    dados_tabela = [[
+    # Balancete de Verificação de Saldos (formato mais comum)
+    dados_tabela_pdf_balancete = [[
         Paragraph("<b>Conta (Cód.)</b>", style_texto_tabela_normal), 
-        Paragraph("<b>Débitos (R$)</b>", style_texto_tabela_direita), 
-        Paragraph("<b>Créditos (R$)</b>", style_texto_tabela_direita),
         Paragraph("<b>Saldo Devedor (R$)</b>", style_texto_tabela_direita),
         Paragraph("<b>Saldo Credor (R$)</b>", style_texto_tabela_direita)
     ]]
-
-    for dados_conta_pdf in contas_para_pdf: # Iterar sobre a lista filtrada e ordenada (se necessário)
-        dados_tabela.append([
-            Paragraph(f"{dados_conta_pdf['nome']} ({dados_conta_pdf['codigo']})", style_texto_tabela_normal),
-            Paragraph(f"{dados_conta_pdf['debito']:.2f}", style_texto_tabela_direita),
-            Paragraph(f"{dados_conta_pdf['credito']:.2f}", style_texto_tabela_direita),
-            Paragraph(f"{dados_conta_pdf['saldo_devedor']:.2f}", style_texto_tabela_direita),
-            Paragraph(f"{dados_conta_pdf['saldo_credor']:.2f}", style_texto_tabela_direita)
-        ])
     
-    if len(contas_para_pdf) > 0: # Se houver contas com movimento/saldo
-        dados_tabela.append([
-            Paragraph("<b>TOTAIS GERAIS</b>", style_texto_tabela_direita), '', '', # Colspan será aplicado
+    for dados_conta_item_pdf in contas_para_pdf: # Iterar sobre a lista já filtrada e com saldos calculados
+        sd = dados_conta_item_pdf['saldo_devedor']
+        sc = dados_conta_item_pdf['saldo_credor']
+        # Só adiciona se houver saldo devedor ou credor
+        if sd > 0 or sc > 0 : 
+            dados_tabela_pdf_balancete.append([
+                Paragraph(f"{dados_conta_item_pdf['nome']} ({dados_conta_item_pdf['codigo']})", style_texto_tabela_normal),
+                Paragraph(f"{sd:.2f}" if sd > 0 else "0.00", style_texto_tabela_direita),
+                Paragraph(f"{sc:.2f}" if sc > 0 else "0.00", style_texto_tabela_direita)
+            ])
+
+    if len(contas_para_pdf) > 0: # Verifica se há contas para exibir
+        dados_tabela_pdf_balancete.append([
+            Paragraph("<b>TOTAIS GERAIS</b>", style_texto_tabela_normal), # Alinhado à esquerda para o nome
             Paragraph(f"<b>{total_saldo_devedor_geral_pdf:.2f}</b>", style_texto_tabela_direita),
             Paragraph(f"<b>{total_saldo_credor_geral_pdf:.2f}</b>", style_texto_tabela_direita)
         ])
-        col_widths_balancete = [6*cm, 2.5*cm, 2.5*cm, 3.5*cm, 3.5*cm]
-        tabela = Table(dados_tabela, colWidths=col_widths_balancete, repeatRows=1)
+        col_widths_balancete = [10*cm, 4*cm, 4*cm] 
+        tabela = Table(dados_tabela_pdf_balancete, colWidths=col_widths_balancete, repeatRows=1)
         estilo_tabela = TableStyle([
             ('BACKGROUND', (0,0), (-1,0), colors.HexColor("#333A40")), 
             ('TEXTCOLOR', (0,0), (-1,0), colors.whitesmoke),
-            ('ALIGN', (0,0), (-1,-1), 'LEFT'),
-            ('ALIGN', (1,0), (4,-1), 'RIGHT'), 
+            ('ALIGN', (0,0), (0,-1), 'LEFT'), 
+            ('ALIGN', (1,0), (2,-1), 'RIGHT'), 
             ('FONTNAME', (0,0), (-1,0), 'Helvetica-Bold'),
             ('FONTNAME', (0,1), (-1,-1), 'Helvetica'),
             ('FONTSIZE', (0,0), (-1,-1), 8),
@@ -730,10 +712,9 @@ def balancete_exportar_pdf():
             ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
             ('BACKGROUND', (0,-1), (-1,-1), colors.lightgrey), 
             ('FONTNAME', (0,-1), (-1,-1), 'Helvetica-Bold'),
-            ('ALIGN', (0,-1), (2,-1), 'RIGHT'), 
-            ('SPAN', (0,-1), (2,-1)), 
+            # ('ALIGN', (0,-1), (0,-1), 'RIGHT'), # "TOTAIS GERAIS" na primeira célula
         ])
-        for i in range(1, len(dados_tabela) -1): 
+        for i in range(1, len(dados_tabela_pdf_balancete) -1): 
             if i % 2 == 0: estilo_tabela.add('BACKGROUND', (0,i), (-1,i), colors.HexColor("#EFEFEF"))
         tabela.setStyle(estilo_tabela)
         story.append(tabela)
@@ -747,6 +728,7 @@ def balancete_exportar_pdf():
     response.headers['Content-Disposition'] = f'attachment; filename=balancete_{id_empresa_atual}_{datetime.now().strftime("%Y%m%d_%H%M%S")}.pdf'
     return response
 
+# ... (Mantenha a sua rota /grafico_data e o if __name__ == '__main__':)
 @app.route('/grafico_data', methods=['GET', 'POST'])
 def grafico_data():
     if not verificar_sessao_empresa():
