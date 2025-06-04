@@ -1,0 +1,16 @@
+[
+    {
+        "data": "2025-06-01",
+        "conta": "1.1.1",
+        "tipo": "D",
+        "valor": 1500.0,
+        "historico": "Recebimento de clientes"
+    },
+    {
+        "data": "2025-06-01",
+        "conta": "1.2.1",
+        "tipo": "C",
+        "valor": 1500.0,
+        "historico": "pagamento de clientes"
+    }
+]

@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Dashboard</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- Link para o seu ficheiro CSS personalizado -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body class="bg-light"> <!-- A classe bg-light do Bootstrap pode ser sobrescrita pelo seu CSS -->
+  <div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <h2>Bem-vindo, {{ usuario }}</h2>
+      <div>
+        <!-- Botão para alternar modo escuro/claro -->
+        <button id="darkModeToggle" class="btn btn-outline-secondary me-2">Modo Escuro</button>
+        <a href="/logout" class="btn btn-outline-danger">Sair</a>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="col-md-6">
+        <form method="POST" class="card p-4 mb-4">
+          <h5>Registar Lançamento</h5>
+          <div class="mb-3">
+            <label>Conta:</label>
+            <select name="conta" class="form-select" required>
+              {% for cod, nome in contas.items() %}
+                <option value="{{ cod }}">{{ nome }} ({{ cod }})</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="mb-3">
+            <label>Tipo:</label>
+            <select name="tipo" class="form-select">
+              <option value="D">Débito</option>
+              <option value="C">Crédito</option>
+            </select>
+          </div>
+          <div class="mb-3">
+            <label>Valor:</label>
+            <input name="valor" type="number" step="0.01" class="form-control" required>
+          </div>
+          <div class="mb-3">
+            <label>Histórico:</label>
+            <input name="historico" class="form-control" required>
+          </div>
+          <button type="submit" class="btn btn-success">Registar</button>
+        </form>
+
+        <a href="/diario" class="btn btn-secondary">📘 Livro Diário</a>
+        <a href="/razao" class="btn btn-secondary">📗 Livro Razão</a>
+        <a href="/balancete" class="btn btn-secondary">📒 Balancete</a>
+        {% if usuario == "admin" %}
+          <a href="/cadastro" class="btn btn-outline-primary mt-3">➕ Registar Novo Utilizador</a>
+        {% endif %}
+      </div>
+
+      <div class="col-md-6">
+        <!-- Adicionados atributos data-* para passar os totais para o JavaScript -->
+        <canvas id="graficoResumo" 
+                data-total-d="{{ total_d | default(0) | float }}" 
+                data-total-c="{{ total_c | default(0) | float }}"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Obter o elemento canvas
+    const canvasElement = document.getElementById('graficoResumo');
+    
+    // Obter os dados dos atributos data-* e convertê-los para números
+    // É importante garantir que estes valores sejam números válidos.
+    const totalDebito = parseFloat(canvasElement.dataset.totalD);
+    const totalCredito = parseFloat(canvasElement.dataset.totalC);
+
+    // Verificar se os valores são números válidos, caso contrário, usar 0 como padrão
+    // Isto ajuda a evitar erros no gráfico se os dados não forem passados corretamente.
+    const dataDebito = !isNaN(totalDebito) ? totalDebito : 0;
+    const dataCredito = !isNaN(totalCredito) ? totalCredito : 0;
+
+    const ctx = canvasElement.getContext('2d');
+    new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: ['Débito', 'Crédito'],
+        datasets: [{
+          label: 'Total (R$)',
+          // Usar os valores obtidos dos atributos data-*
+          data: [dataDebito, dataCredito], 
+          backgroundColor: ['#dc3545', '#198754'] // Cores padrão do Bootstrap para danger e success
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: { display: false },
+          title: { display: true, text: 'Resumo Financeiro' }
+        },
+        scales: {
+          x: {
+            ticks: {
+              color: 'rgba(0, 0, 0, 0.87)' // Cor padrão para modo claro
+            },
+            grid: {
+              color: 'rgba(0, 0, 0, 0.1)'
+            }
+          },
+          y: {
+            ticks: {
+              color: 'rgba(0, 0, 0, 0.87)' // Cor padrão para modo claro
+            },
+            grid: {
+              color: 'rgba(0, 0, 0, 0.1)'
+            }
+          }
+        }
+      }
+    });
+  </script>
+  <!-- Link para o seu ficheiro JavaScript personalizado -->
+  <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>

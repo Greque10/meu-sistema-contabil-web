@@ -1,0 +1,54 @@
+/* Define as cores padrão (modo claro) */
+:root {
+    --cor-fundo: #ffffff; /* Branco */
+    --cor-texto: #212529; /* Preto suave */
+    --cor-borda: #dee2e6;
+    /* Adicione outras variáveis de cor que seu site usa */
+    --cor-primaria: #007bff;
+    --cor-fundo-tabela: #f8f9fa;
+}
+
+/* Define as cores para o modo escuro */
+body.dark-mode {
+    --cor-fundo: #1a1a1a; /* Um cinza bem escuro */
+    --cor-texto: #e0e0e0; /* Um cinza claro para o texto */
+    --cor-borda: #444444;
+    /* Outras cores para o modo escuro */
+    --cor-primaria: #0d6efd; /* Pode ajustar se necessário */
+    --cor-fundo-tabela: #2c2c2c;
+}
+
+/* Estilo base do corpo */
+body {
+    background-color: var(--cor-fundo);
+    color: var(--cor-texto);
+    font-family: sans-serif;
+    transition: background-color 0.3s ease, color 0.3s ease; /* Transição suave */
+}
+
+/* Exemplo de como aplicar a outros elementos */
+h1, h2, h3 {
+    color: var(--cor-texto);
+}
+
+table {
+    background-color: var(--cor-fundo-tabela);
+    border: 1px solid var(--cor-borda);
+}
+
+/* Você precisará adicionar mais estilos para outros elementos (botões, inputs, etc.)
+   para que eles também se adaptem ao modo escuro usando as variáveis. */
+.btn-custom {
+    background-color: var(--cor-primaria);
+    color: white;
+    border: 1px solid var(--cor-primaria);
+}
+
+body.dark-mode .btn-custom {
+    /* Pode precisar de ajustes específicos para botões no dark mode */
+}
+
+/* Estilos para links */
+a {
+    color: var(--cor-primaria);
+}

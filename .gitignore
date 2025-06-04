@@ -1,0 +1,18 @@
+# Arquivos de ambiente virtual
+venv/
+*.venv
+env/
+ENV/
+
+# Arquivos de cache do Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Arquivos de configuração local (se houver)
+.env
+config.ini 
+
+# Arquivos de IDEs (exemplo para VS Code)
+.vscode/
