@@ -52,3 +52,141 @@ body.dark-mode .btn-custom {
 a {
     color: var(--cor-primaria);
 }
+/* :root e body.dark-mode com as variáveis de cor (como já tem) */
+:root {
+    --cor-fundo: #ffffff;
+    --cor-texto: #212529;
+    --cor-borda: #dee2e6;
+    --cor-primaria: #007bff;
+    --cor-fundo-tabela: #f8f9fa;
+    /* Cores para elementos de formulário e cards */
+    --cor-fundo-card: #ffffff;
+    --cor-fundo-input: #ffffff;
+    --cor-texto-input: #212529;
+    --cor-borda-input: #ced4da;
+    --cor-fundo-botao-secundario: #6c757d;
+    --cor-texto-botao-secundario: #ffffff;
+}
+
+body.dark-mode {
+    --cor-fundo: #121212; /* Fundo um pouco mais escuro e comum para dark mode */
+    --cor-texto: #e0e0e0;
+    --cor-borda: #444444;
+    --cor-primaria: #0d6efd; /* Pode manter ou ajustar */
+    --cor-fundo-tabela: #1e1e1e;
+    /* Cores escuras para elementos de formulário e cards */
+    --cor-fundo-card: #1e1e1e;
+    --cor-fundo-input: #2c2c2c;
+    --cor-texto-input: #e0e0e0;
+    --cor-borda-input: #555555;
+    --cor-fundo-botao-secundario: #5a6268;
+    --cor-texto-botao-secundario: #e0e0e0;
+}
+
+/* Estilo base do corpo */
+body {
+    background-color: var(--cor-fundo);
+    color: var(--cor-texto);
+    font-family: sans-serif;
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* Cabeçalhos */
+body.dark-mode h1,
+body.dark-mode h2,
+body.dark-mode h3,
+body.dark-mode h4,
+body.dark-mode h5,
+body.dark-mode h6 {
+    color: var(--cor-texto);
+}
+
+/* Links */
+body.dark-mode a {
+    color: var(--cor-primaria); /* Ou uma cor de link específica para modo escuro */
+}
+
+/* Para sobrescrever o bg-light do Bootstrap no body e no container principal */
+body.dark-mode, 
+body.dark-mode .container, 
+body.dark-mode .bg-light { /* Garante que o bg-light seja sobrescrito */
+    background-color: var(--cor-fundo) !important; /* !important pode ser necessário para Bootstrap */
+    color: var(--cor-texto);
+}
+
+/* Estilizando o Card do formulário */
+body.dark-mode .card {
+    background-color: var(--cor-fundo-card);
+    border-color: var(--cor-borda);
+}
+
+/* Estilizando labels dentro do card no modo escuro */
+body.dark-mode .card label {
+    color: var(--cor-texto);
+}
+
+/* Estilizando inputs e selects */
+body.dark-mode .form-control,
+body.dark-mode .form-select {
+    background-color: var(--cor-fundo-input);
+    color: var(--cor-texto-input);
+    border-color: var(--cor-borda-input);
+}
+
+/* Placeholder de inputs no modo escuro */
+body.dark-mode .form-control::placeholder {
+    color: #888; /* Ajuste conforme necessário */
+}
+
+/* Botões - Exemplo para botões secundários (Livro Diário, etc.) */
+/* Você precisará de regras para .btn-success, .btn-outline-danger, etc., se quiser alterá-los */
+body.dark-mode .btn-secondary {
+    background-color: var(--cor-fundo-botao-secundario);
+    border-color: var(--cor-fundo-botao-secundario);
+    color: var(--cor-texto-botao-secundario);
+}
+
+body.dark-mode .btn-outline-secondary {
+    color: var(--cor-texto-botao-secundario);
+    border-color: var(--cor-fundo-botao-secundario);
+}
+body.dark-mode .btn-outline-secondary:hover {
+    background-color: var(--cor-fundo-botao-secundario);
+    color: var(--cor-texto); /* Ajustar cor do texto no hover */
+}
+
+
+/* Adicione mais regras conforme necessário para outros elementos */
+
+/* Chart.js - Cores dos eixos e título no modo escuro */
+/* Esta parte é um pouco mais complexa de fazer apenas com CSS,
+   idealmente seria atualizada via JavaScript quando o tema muda.
+   Mas podemos tentar algumas coisas genéricas. */
+body.dark-mode #graficoResumo {
+    /* Se o Chart.js renderizar texto diretamente no canvas, o CSS pode não afetar.
+       Mas se ele usar elementos HTML para legendas/títulos fora do canvas, pode funcionar. */
+}
+
+/* Para as cores dos ticks e grid do Chart.js, o ideal é mudar via JavaScript.
+   No seu script do Chart.js, você pode ter uma função para atualizar as opções:
+
+   function updateChartColors(chartInstance, isDarkMode) {
+       const textColor = isDarkMode ? 'rgba(224, 224, 224, 0.87)' : 'rgba(0, 0, 0, 0.87)';
+       const gridColor = isDarkMode ? 'rgba(224, 224, 224, 0.1)' : 'rgba(0, 0, 0, 0.1)';
+       const titleColor = isDarkMode ? '#e0e0e0' : '#666'; // Exemplo
+
+       chartInstance.options.scales.x.ticks.color = textColor;
+       chartInstance.options.scales.x.grid.color = gridColor;
+       chartInstance.options.scales.y.ticks.color = textColor;
+       chartInstance.options.scales.y.grid.color = gridColor;
+       chartInstance.options.plugins.title.color = titleColor;
+       // Adicione outras opções de cor que queira mudar
+       chartInstance.update();
+   }
+
+   // E no seu script.js, chame esta função dentro do applyTheme:
+   // (Primeiro, guarde a instância do gráfico numa variável global ou acessível)
+   // if (window.myChartInstance) { // Supondo que myChartInstance é a sua instância do gráfico
+   //    updateChartColors(window.myChartInstance, theme === 'dark');
+   // }
+*/
