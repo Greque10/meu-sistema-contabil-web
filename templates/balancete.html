@@ -3,24 +3,29 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Balancete de Verificação - Sistema Contábil</title>
+    <title>Balancete de Verificação - {{ nome_empresa if nome_empresa else "Sistema Contábil" }}</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body class="bg-light">
     <div class="container mt-4">
         <div class="d-flex justify-content-between align-items-center mb-3">
-            <h2>📒 Balancete de Verificação</h2>
+            <h2>📒 Balancete de Verificação <small class="text-muted fs-6">({{ nome_empresa }})</small></h2>
             <div>
                 <button id="darkModeToggle" class="btn btn-outline-secondary me-2">Modo Escuro</button>
                 <a href="{{ url_for('dashboard') }}" class="btn btn-primary">← Voltar ao Dashboard</a>
             </div>
         </div>
 
-        {% if saldos_contas %}
+        <!-- Botão de Exportação PDF -->
+        <div class="mb-3">
+            <a href="{{ url_for('balancete_exportar_pdf') }}" class="btn btn-danger btn-sm">Exportar para PDF</a>
+        </div>
+
+        {% if saldos_contas and (total_debitos != 0 or total_creditos != 0) %} {# Verifica se há dados para mostrar #}
             <div class="table-responsive">
                 <table class="table table-bordered table-striped table-hover">
-                    <thead class="table-dark"> <!-- Cabeçalho escuro para destaque -->
+                    <thead class="table-dark">
                         <tr>
                             <th scope="col" style="width: 40%;">Conta (Código)</th>
                             <th scope="col" class="text-end">Débitos (R$)</th>
@@ -31,27 +36,30 @@
                     </thead>
                     <tbody>
                         {% for cod, dados_conta in saldos_contas.items() %}
-                        <tr>
-                            <td>{{ dados_conta.nome }} ({{ cod }})</td>
-                            <td class="text-end">{{ "%.2f"|format(dados_conta.debito if dados_conta.debito else 0.0) }}</td>
-                            <td class="text-end">{{ "%.2f"|format(dados_conta.credito if dados_conta.credito else 0.0) }}</td>
-                            <td class="text-end">{{ "%.2f"|format(dados_conta.saldo_devedor if dados_conta.saldo_devedor else 0.0) }}</td>
-                            <td class="text-end">{{ "%.2f"|format(dados_conta.saldo_credor if dados_conta.saldo_credor else 0.0) }}</td>
-                        </tr>
+                            {# Apenas mostrar contas com movimento ou saldo #}
+                            {% if dados_conta.debito != 0 or dados_conta.credito != 0 or dados_conta.saldo_devedor != 0 or dados_conta.saldo_credor != 0 %}
+                            <tr>
+                                <td>{{ dados_conta.nome }} ({{ cod }})</td>
+                                <td class="text-end">{{ "%.2f"|format(dados_conta.debito | default(0.0)) }}</td>
+                                <td class="text-end">{{ "%.2f"|format(dados_conta.credito | default(0.0)) }}</td>
+                                <td class="text-end">{{ "%.2f"|format(dados_conta.saldo_devedor | default(0.0)) }}</td>
+                                <td class="text-end">{{ "%.2f"|format(dados_conta.saldo_credor | default(0.0)) }}</td>
+                            </tr>
+                            {% endif %}
                         {% endfor %}
                     </tbody>
                     <tfoot>
-                        <tr class="table-group-divider"> <!-- Linha divisória antes dos totais -->
+                        <tr class="table-group-divider">
                             <th class="text-end" colspan="3">TOTAIS GERAIS:</th>
-                            <th class="text-end">R$ {{ "%.2f"|format(total_debitos if total_debitos else 0.0) }}</th>
-                            <th class="text-end">R$ {{ "%.2f"|format(total_creditos if total_creditos else 0.0) }}</th>
+                            <th class="text-end">R$ {{ "%.2f"|format(total_debitos | default(0.0)) }}</th>
+                            <th class="text-end">R$ {{ "%.2f"|format(total_creditos | default(0.0)) }}</th>
                         </tr>
                     </tfoot>
                 </table>
             </div>
         {% else %}
             <div class="alert alert-info" role="alert">
-                Não há dados suficientes para gerar o balancete. Verifique os lançamentos e o plano de contas.
+                Não há dados suficientes para gerar o balancete. Verifique os lançamentos.
             </div>
         {% endif %}
     </div>

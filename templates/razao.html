@@ -3,31 +3,36 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Livro Razão - Sistema Contábil</title>
+    <title>Livro Razão - {{ nome_empresa if nome_empresa else "Sistema Contábil" }}</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body class="bg-light">
-    <div class="container-fluid mt-4"> <!-- Usar container-fluid para mais espaço -->
-        <div class="d-flex justify-content-between align-items-center mb-3 px-3"> <!-- Adicionado padding horizontal -->
-            <h2>📗 Livro Razão</h2>
+    <div class="container-fluid mt-4">
+        <div class="d-flex justify-content-between align-items-center mb-3 px-3">
+            <h2>📗 Livro Razão <small class="text-muted fs-6">({{ nome_empresa }})</small></h2>
             <div>
                 <button id="darkModeToggle" class="btn btn-outline-secondary me-2">Modo Escuro</button>
                 <a href="{{ url_for('dashboard') }}" class="btn btn-primary">← Voltar ao Dashboard</a>
             </div>
         </div>
 
-        {% if razao_contas %}
+        <!-- Botão de Exportação PDF -->
+        <div class="mb-3 px-3">
+            <a href="{{ url_for('razao_exportar_pdf') }}" class="btn btn-danger btn-sm">Exportar para PDF</a>
+        </div>
+
+        {% if razao_contas and any(dados_c.lancamentos for dados_c in razao_contas.values()) %}
             {% for conta_cod, dados_conta in razao_contas.items() %}
-                <div class="card shadow-sm mb-4">
-                    <div class="card-header bg-primary text-white"> <!-- Cabeçalho do card destacado -->
-                        <h5 class="mb-0">Conta: {{ dados_conta.nome }} ({{ conta_cod }})</h5>
-                    </div>
-                    <div class="card-body p-0"> <!-- Remover padding do card-body para a tabela ocupar tudo -->
-                        {% if dados_conta.lancamentos %}
+                {% if dados_conta.lancamentos %} {# Só mostra o card se a conta tiver lançamentos #}
+                    <div class="card shadow-sm mb-4">
+                        <div class="card-header bg-primary text-white">
+                            <h5 class="mb-0">Conta: {{ dados_conta.nome }} ({{ conta_cod }})</h5>
+                        </div>
+                        <div class="card-body p-0">
                             <div class="table-responsive">
-                                <table class="table table-striped table-hover mb-0"> <!-- mb-0 para remover margem inferior da tabela -->
-                                    <thead class="table-light"> <!-- Cabeçalho da tabela mais suave -->
+                                <table class="table table-striped table-hover mb-0">
+                                    <thead class="table-light">
                                         <tr>
                                             <th scope="col" style="width: 15%;">Data</th>
                                             <th scope="col" style="width: 40%;">Histórico</th>
@@ -37,21 +42,17 @@
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        {# CORREÇÃO: Inicializar saldo_acumulado_temp AQUI, uma vez por conta, antes do loop dos lançamentos #}
                                         {% set saldo_acumulado_temp = namespace(valor=0.0) %}
-
                                         {% for lanc in dados_conta.lancamentos %}
                                             {% set valor_lancamento = lanc.valor | default(0.0) | float %}
-
                                             {% if lanc.tipo == 'D' %}
                                                 {% set saldo_acumulado_temp.valor = saldo_acumulado_temp.valor + valor_lancamento %}
                                             {% elif lanc.tipo == 'C' %}
                                                 {% set saldo_acumulado_temp.valor = saldo_acumulado_temp.valor - valor_lancamento %}
                                             {% endif %}
                                             {% set saldo_apos_lancamento = saldo_acumulado_temp.valor %}
-
                                         <tr>
-                                            <td>{{ lanc.data.split(' ')[0] }}</td> {# Mostra apenas AAAA-MM-DD #}
+                                            <td>{{ lanc.data.split(' ')[0] }}</td>
                                             <td>{{ lanc.historico }}</td>
                                             <td class="text-end">
                                                 {% if lanc.tipo == 'D' %}{{ "%.2f"|format(valor_lancamento) }}{% endif %}
@@ -59,35 +60,29 @@
                                             <td class="text-end">
                                                 {% if lanc.tipo == 'C' %}{{ "%.2f"|format(valor_lancamento) }}{% endif %}
                                             </td>
-                                            <td class="text-end">
-                                                {{ "%.2f"|format(saldo_apos_lancamento) }}
-                                            </td>
+                                            <td class="text-end">{{ "%.2f"|format(saldo_apos_lancamento) }}</td>
                                         </tr>
                                         {% endfor %}
                                     </tbody>
                                 </table>
                             </div>
-                        {% else %}
-                            <p class="text-center p-3">Nenhum lançamento para esta conta.</p>
-                        {% endif %}
+                        </div>
+                        <div class="card-footer text-end">
+                            <strong>Débitos Totais:</strong> R$ {{ "%.2f"|format(dados_conta.saldo_devedor | default(0.0)) }} |
+                            <strong>Créditos Totais:</strong> R$ {{ "%.2f"|format(dados_conta.saldo_credor | default(0.0)) }} |
+                            <strong>Saldo Final da Conta: R$ {{ "%.2f"|format(dados_conta.saldo_final | default(0.0)) }}
+                                ({{ 'Devedor' if (dados_conta.saldo_final | default(0.0)) >= 0 else 'Credor (' + "%.2f"|format((dados_conta.saldo_final | default(0.0))|abs) + ')' }})
+                            </strong>
+                        </div>
                     </div>
-                    <div class="card-footer text-end"> <!-- Rodapé do card para totais da conta -->
-                        <strong>Débitos Totais:</strong> R$ {{ "%.2f"|format(dados_conta.saldo_devedor | default(0.0)) }} |
-                        <strong>Créditos Totais:</strong> R$ {{ "%.2f"|format(dados_conta.saldo_credor | default(0.0)) }} |
-                        <strong>Saldo Final da Conta: R$ {{ "%.2f"|format(dados_conta.saldo_final | default(0.0)) }}
-                            ({{ 'Devedor' if (dados_conta.saldo_final | default(0.0)) >= 0 else 'Credor (' + "%.2f"|format((dados_conta.saldo_final | default(0.0))|abs) + ')' }})
-                        </strong>
-                    </div>
-                </div>
-            {% else %}
-                {# Este else é para o loop de razao_contas.items(), caso razao_contas esteja vazio #}
-                <div class="alert alert-info" role="alert">
-                    Nenhuma conta encontrada ou nenhum lançamento para exibir no Livro Razão.
-                </div>
+                {% endif %}
             {% endfor %}
+        {% else %}
+            <div class="alert alert-info mx-3" role="alert">
+                Nenhuma conta com lançamentos para exibir no Livro Razão.
+            </div>
         {% endif %}
     </div>
-
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="{{ url_for('static', filename='script.js') }}"></script>
 </body>
