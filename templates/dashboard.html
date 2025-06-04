@@ -1,118 +1,218 @@
 <!DOCTYPE html>
-<html>
+<html lang="pt-br">
 <head>
-  <title>Dashboard</title>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Sistema Contábil</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Link para o seu ficheiro CSS personalizado -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
-<body class="bg-light">
-  <div class="container mt-4">
-    <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap">
-      <h2>Bem-vindo, {{ usuario }}</h2>
-      <div class="d-flex flex-wrap gap-2">
-        <button id="darkModeToggle" class="btn btn-outline-secondary">Modo Escuro</button>
-        <a href="/logout" class="btn btn-outline-danger">Sair</a>
-      </div>
+<body class="bg-light"> <!-- A classe bg-light do Bootstrap será sobrescrita pelo seu CSS no modo escuro -->
+    <div class="container mt-4">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h2>Bem-vindo, {{ session.get('usuario', 'Utilizador') }}</h2>
+            <div>
+                <!-- Botão para alternar modo escuro/claro -->
+                <button id="darkModeToggle" class="btn btn-outline-secondary me-2">Modo Escuro</button>
+                <a href="{{ url_for('logout') }}" class="btn btn-outline-danger">Sair</a>
+            </div>
+        </div>
+
+        <!-- Seção para exibir mensagens flash -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Fechar"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <div class="row">
+            <div class="col-md-6">
+                <div class="card shadow-sm p-4 mb-4">
+                    <h5 class="card-title mb-3">Registar Lançamento</h5>
+                    <form method="POST" action="{{ url_for('dashboard') }}">
+                        <div class="mb-3">
+                            <label for="conta" class="form-label">Conta:</label>
+                            <select name="conta" id="conta" class="form-select" required>
+                                <option value="" disabled selected>Selecione uma conta</option>
+                                {% for cod, nome_conta in contas.items() %}
+                                    <option value="{{ cod }}">{{ nome_conta }} ({{ cod }})</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="tipo" class="form-label">Tipo:</label>
+                            <select name="tipo" id="tipo" class="form-select">
+                                <option value="D">Débito</option>
+                                <option value="C">Crédito</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="valor" class="form-label">Valor (R$):</label>
+                            <input name="valor" id="valor" type="number" step="0.01" min="0.01" class="form-control" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="historico" class="form-label">Histórico:</label>
+                            <input name="historico" id="historico" class="form-control" required>
+                        </div>
+                        <button type="submit" class="btn btn-success w-100">Registar Lançamento</button>
+                    </form>
+                </div>
+
+                <div class="d-grid gap-2 mb-3">
+                    <a href="{{ url_for('diario') }}" class="btn btn-secondary">📘 Livro Diário</a>
+                    <a href="{{ url_for('razao') }}" class="btn btn-secondary">📗 Livro Razão</a>
+                    <a href="{{ url_for('balancete') }}" class="btn btn-secondary">📒 Balancete</a>
+                    <!-- Botão corrigido para o gráfico por data -->
+                    <a href="{{ url_for('grafico_data') }}" class="btn btn-info">📈 Gráfico por Data</a>
+                </div>
+
+                {% if session.get('usuario') == "admin" %}
+                    <div class="d-grid">
+                        <a href="{{ url_for('cadastro') }}" class="btn btn-outline-primary">➕ Registar Novo Utilizador</a>
+                    </div>
+                {% endif %}
+            </div>
+
+            <div class="col-md-6">
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        <h5 class="card-title text-center">Resumo Financeiro</h5>
+                        {% if total_d is defined and total_c is defined %}
+                            <canvas id="graficoResumoDashboard" height="200"></canvas>
+                            <!-- Adicionado para passar os dados para o JavaScript do gráfico -->
+                            <script id="dashboardChartData" type="application/json">
+                                {
+                                    "total_d": {{ total_d | default(0) | float }},
+                                    "total_c": {{ total_c | default(0) | float }}
+                                }
+                            </script>
+                        {% else %}
+                            <p class="text-center text-muted">Não há dados suficientes para exibir o resumo.</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 
-    <div class="row g-4">
-      <div class="col-md-6">
-        <form method="POST" class="card p-4 mb-3">
-          <h5>Registrar Lançamento</h5>
-          <div class="mb-3">
-            <label>Conta:</label>
-            <select name="conta" class="form-select" required>
-              {% for cod, nome in contas.items() %}
-                <option value="{{ cod }}">{{ nome }} ({{ cod }})</option>
-              {% endfor %}
-            </select>
-          </div>
-          <div class="mb-3">
-            <label>Tipo:</label>
-            <select name="tipo" class="form-select">
-              <option value="D">Débito</option>
-              <option value="C">Crédito</option>
-            </select>
-          </div>
-          <div class="mb-3">
-            <label>Valor:</label>
-            <input name="valor" type="number" step="0.01" class="form-control" required>
-          </div>
-          <div class="mb-3">
-            <label>Histórico:</label>
-            <input name="historico" class="form-control" required>
-          </div>
-          <button type="submit" class="btn btn-success w-100">Registrar</button>
-        </form>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const canvasDashboard = document.getElementById('graficoResumoDashboard');
+            let dashboardChartData = null;
+            let chartInstanceDashboard = null;
 
-        <div class="d-grid gap-2">
-          <a href="/diario" class="btn btn-secondary">📘 Livro Diário</a>
-          <a href="/razao" class="btn btn-secondary">📗 Livro Razão</a>
-          <a href="/balancete" class="btn btn-secondary">📒 Balancete</a>
-          <a href="/grafico_detalhado" class="btn btn-outline-info">📈 Gráfico por Data</a>
-          {% if usuario == "admin" %}
-            <a href="/cadastro" class="btn btn-outline-primary">➕ Cadastrar Novo Usuário</a>
-          {% endif %}
-        </div>
-      </div>
-
-      <div class="col-md-6">
-        <div class="card p-3">
-          <canvas id="graficoResumo"
-                  data-total-d="{{ total_d | default(0) | float }}"
-                  data-total-c="{{ total_c | default(0) | float }}"></canvas>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <script>
-    const canvasElement = document.getElementById('graficoResumo');
-    const totalDebito = parseFloat(canvasElement.dataset.totalD);
-    const totalCredito = parseFloat(canvasElement.dataset.totalC);
-    const dataDebito = !isNaN(totalDebito) ? totalDebito : 0;
-    const dataCredito = !isNaN(totalCredito) ? totalCredito : 0;
-
-    const ctx = canvasElement.getContext('2d');
-    new Chart(ctx, {
-      type: 'bar',
-      data: {
-        labels: ['Débito', 'Crédito'],
-        datasets: [{
-          label: 'Total (R$)',
-          data: [dataDebito, dataCredito],
-          backgroundColor: ['#dc3545', '#198754']
-        }]
-      },
-      options: {
-        responsive: true,
-        plugins: {
-          legend: { display: false },
-          title: { display: true, text: 'Resumo Financeiro' }
-        },
-        scales: {
-          x: {
-            ticks: {
-              color: 'rgba(0, 0, 0, 0.87)'
-            },
-            grid: {
-              color: 'rgba(0, 0, 0, 0.1)'
+            try {
+                const jsonDataElement = document.getElementById('dashboardChartData');
+                if (jsonDataElement && jsonDataElement.textContent.trim() !== "") {
+                    const parsedData = JSON.parse(jsonDataElement.textContent);
+                    if (parsedData && typeof parsedData === 'object') {
+                        dashboardChartData = parsedData;
+                    }
+                }
+            } catch (e) {
+                console.error("Erro ao analisar os dados do gráfico do dashboard JSON:", e);
             }
-          },
-          y: {
-            ticks: {
-              color: 'rgba(0, 0, 0, 0.87)'
-            },
-            grid: {
-              color: 'rgba(0, 0, 0, 0.1)'
+
+            if (canvasDashboard && dashboardChartData && (dashboardChartData.total_d !== undefined && dashboardChartData.total_c !== undefined)) {
+                const ctxDashboard = canvasDashboard.getContext('2d');
+                
+                let corTextoPadraoDash = getComputedStyle(document.body).getPropertyValue('--cor-texto') || 'rgba(0, 0, 0, 0.87)';
+                let corGridPadraoDash = document.body.classList.contains('dark-mode') ? 'rgba(224, 224, 224, 0.1)' : 'rgba(0, 0, 0, 0.1)';
+                let corTituloPadraoDash = document.body.classList.contains('dark-mode') ? '#e0e0e0' : '#666';
+
+                chartInstanceDashboard = new Chart(ctxDashboard, {
+                    type: 'bar',
+                    data: {
+                        labels: ['Débito', 'Crédito'],
+                        datasets: [{
+                            label: 'Total (R$)',
+                            data: [dashboardChartData.total_d, dashboardChartData.total_c],
+                            backgroundColor: [
+                                'rgba(220, 53, 69, 0.7)', // Vermelho para débito
+                                'rgba(25, 135, 84, 0.7)'  // Verde para crédito
+                            ],
+                            borderColor: [
+                                'rgba(220, 53, 69, 1)',
+                                'rgba(25, 135, 84, 1)'
+                            ],
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: true,
+                        plugins: {
+                            legend: {
+                                display: false // Legenda já está implícita pelos labels do eixo X
+                            },
+                            title: {
+                                display: false, // O título "Resumo Financeiro" já está no card-title
+                                text: 'Resumo Financeiro',
+                                color: corTituloPadraoDash
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        let label = context.dataset.label || '';
+                                        if (label) { label += ': '; }
+                                        if (context.parsed.y !== null) {
+                                            label += new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(context.parsed.y);
+                                        }
+                                        return label;
+                                    }
+                                }
+                            }
+                        },
+                        scales: {
+                            x: {
+                                ticks: { color: corTextoPadraoDash },
+                                grid: { display: false } // Remove grid vertical para um visual mais limpo
+                            },
+                            y: {
+                                beginAtZero: true,
+                                ticks: { 
+                                    color: corTextoPadraoDash,
+                                    callback: function(value) { return 'R$ ' + value; } // Formata ticks do eixo Y
+                                },
+                                grid: { color: corGridPadraoDash }
+                            }
+                        }
+                    }
+                });
             }
-          }
-        }
-      }
-    });
-  </script>
-  <script src="{{ url_for('static', filename='script.js') }}"></script>
+
+            // Função para atualizar cores do gráfico do dashboard (para modo escuro)
+            window.updateChartColorsForDashboard = function(isDarkMode) {
+                if (chartInstanceDashboard) {
+                    const newTextColor = isDarkMode ? 'rgba(224, 224, 224, 0.87)' : 'rgba(0, 0, 0, 0.87)';
+                    const newGridColor = isDarkMode ? 'rgba(224, 224, 224, 0.1)' : 'rgba(0, 0, 0, 0.1)';
+                    const newTitleColor = isDarkMode ? '#e0e0e0' : '#666'; // Não usado se display: false
+
+                    if (chartInstanceDashboard.options.plugins.title) chartInstanceDashboard.options.plugins.title.color = newTitleColor;
+                    const scales = chartInstanceDashboard.options.scales;
+                    if (scales) {
+                        if (scales.x && scales.x.ticks) scales.x.ticks.color = newTextColor;
+                        if (scales.y && scales.y.ticks) scales.y.ticks.color = newTextColor;
+                        if (scales.y && scales.y.grid) scales.y.grid.color = newGridColor;
+                    }
+                    chartInstanceDashboard.update();
+                }
+            }
+            // Chama a função de atualização de cores uma vez no carregamento
+            if (typeof window.updateChartColorsForDashboard === 'function') {
+                window.updateChartColorsForDashboard(document.body.classList.contains('dark-mode'));
+            }
+        });
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Link para o seu ficheiro JavaScript personalizado para o modo escuro -->
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
 </body>
 </html>

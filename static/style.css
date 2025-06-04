@@ -1,3 +1,5 @@
+/* static/style.css */
+
 /* :root define as variáveis de cor para o modo claro (padrão) */
 :root {
     --cor-fundo: #ffffff;
@@ -11,7 +13,8 @@
     --cor-fundo-input: #ffffff;
     --cor-texto-input: #212529;
     --cor-borda-input: #ced4da;
-    --cor-fundo-botao-primario: #007bff;
+
+    --cor-fundo-botao-primario: #0d6efd; /* Bootstrap 5 primary */
     --cor-texto-botao-primario: #ffffff;
     --cor-fundo-botao-secundario: #6c757d;
     --cor-texto-botao-secundario: #ffffff;
@@ -19,29 +22,52 @@
     --cor-texto-botao-sucesso: #ffffff;
     --cor-fundo-botao-perigo: #dc3545;
     --cor-texto-botao-perigo: #ffffff;
-    --cor-fundo-botao-outline-primario-hover: #007bff;
+    --cor-fundo-botao-info: #0dcaf0;
+    --cor-texto-botao-info: #000000;
+
+
+    /* Cores para botões outline (modo claro) */
+    --cor-texto-botao-outline-primario: var(--cor-fundo-botao-primario);
+    --cor-borda-botao-outline-primario: var(--cor-fundo-botao-primario);
+    --cor-fundo-botao-outline-primario-hover: var(--cor-fundo-botao-primario);
     --cor-texto-botao-outline-primario-hover: #ffffff;
-    --cor-borda-botao-outline-secundario: #6c757d;
-    --cor-texto-botao-outline-secundario: #6c757d;
-    --cor-fundo-botao-outline-secundario-hover: #6c757d;
+
+    --cor-texto-botao-outline-secundario: var(--cor-fundo-botao-secundario);
+    --cor-borda-botao-outline-secundario: var(--cor-fundo-botao-secundario);
+    --cor-fundo-botao-outline-secundario-hover: var(--cor-fundo-botao-secundario);
     --cor-texto-botao-outline-secundario-hover: #ffffff;
 
+    --cor-texto-botao-outline-perigo: var(--cor-fundo-botao-perigo);
+    --cor-borda-botao-outline-perigo: var(--cor-fundo-botao-perigo);
+    --cor-fundo-botao-outline-perigo-hover: var(--cor-fundo-botao-perigo);
+    --cor-texto-botao-outline-perigo-hover: #ffffff;
 
-    /* Cores de Tabelas */
-    --cor-fundo-tabela: #ffffff;
+
+    /* Cores de Tabelas (modo claro) */
+    --cor-fundo-tabela: #ffffff; /* Fundo da tabela em si */
     --cor-texto-tabela: #212529;
     --cor-borda-tabela: #dee2e6;
-    --cor-fundo-cabecalho-tabela: #f8f9fa;
+    --cor-fundo-cabecalho-tabela: #f8f9fa; /* Bootstrap .table-light ou padrão */
+    --cor-fundo-linha-tabela: transparent; /* Fundo de uma célula/linha normal */
     --cor-fundo-linha-alternada-tabela: rgba(0, 0, 0, 0.05); /* Para table-striped */
     --cor-fundo-linha-hover-tabela: rgba(0, 0, 0, 0.075); /* Para table-hover */
+
+    /* Variáveis Bootstrap para tabelas (para sobrescrita no modo escuro) */
+    --bs-table-bg: var(--cor-fundo-linha-tabela);
+    --bs-table-color: var(--cor-texto-tabela);
+    --bs-table-border-color: var(--cor-borda-tabela);
+    --bs-table-striped-bg: var(--cor-fundo-linha-alternada-tabela);
+    --bs-table-striped-color: var(--cor-texto-tabela);
+    --bs-table-hover-bg: var(--cor-fundo-linha-hover-tabela);
+    --bs-table-hover-color: var(--cor-texto-tabela);
 }
 
 /* body.dark-mode define as variáveis para o modo escuro */
 body.dark-mode {
     --cor-fundo: #121212;
     --cor-texto: #e0e0e0;
-    --cor-borda: #3a3a3a; /* Bordas um pouco mais visíveis */
-    --cor-link: #63a4ff; /* Azul mais claro para links */
+    --cor-borda: #3a3a3a;
+    --cor-link: #63a4ff;
     --cor-link-hover: #82b7ff;
 
     /* Cores de componentes Bootstrap para modo escuro */
@@ -49,49 +75,75 @@ body.dark-mode {
     --cor-fundo-input: #2c2c2c;
     --cor-texto-input: #e0e0e0;
     --cor-borda-input: #555555;
-    --cor-fundo-botao-primario: #0d6efd;
-    --cor-texto-botao-primario: #ffffff;
+
+    --cor-fundo-botao-primario: #0d6efd; /* Mantendo o azul do Bootstrap 5 */
+    /* --cor-texto-botao-primario: #ffffff; (já é branco) */
     --cor-fundo-botao-secundario: #5a6268;
     --cor-texto-botao-secundario: #e0e0e0;
     --cor-fundo-botao-sucesso: #146c43;
-    --cor-texto-botao-sucesso: #ffffff;
+    /* --cor-texto-botao-sucesso: #ffffff; */
     --cor-fundo-botao-perigo: #b02a37;
-    --cor-texto-botao-perigo: #ffffff;
-    --cor-fundo-botao-outline-primario-hover: #0d6efd;
+    /* --cor-texto-botao-perigo: #ffffff; */
+    --cor-fundo-botao-info: #0aa3c2; /* Ajuste para melhor contraste */
+    --cor-texto-botao-info: #ffffff;
+
+
+    /* Cores para botões outline (modo escuro) */
+    --cor-texto-botao-outline-primario: var(--cor-fundo-botao-primario);
+    --cor-borda-botao-outline-primario: var(--cor-fundo-botao-primario);
+    --cor-fundo-botao-outline-primario-hover: var(--cor-fundo-botao-primario);
     --cor-texto-botao-outline-primario-hover: #ffffff;
-    --cor-borda-botao-outline-secundario: #8f9ca6; /* Borda mais clara */
-    --cor-texto-botao-outline-secundario: #adb5bd; /* Texto mais claro */
+
+    --cor-texto-botao-outline-secundario: #adb5bd;
+    --cor-borda-botao-outline-secundario: #5a6268;
     --cor-fundo-botao-outline-secundario-hover: #5a6268;
     --cor-texto-botao-outline-secundario-hover: #e0e0e0;
+
+    --cor-texto-botao-outline-perigo: var(--cor-fundo-botao-perigo);
+    --cor-borda-botao-outline-perigo: var(--cor-fundo-botao-perigo);
+    --cor-fundo-botao-outline-perigo-hover: var(--cor-fundo-botao-perigo);
+    --cor-texto-botao-outline-perigo-hover: #ffffff;
 
 
     /* Cores de Tabelas para modo escuro */
     --cor-fundo-tabela: #1e1e1e;
-    --cor-texto-tabela: #e0e0e0;
+    --cor-texto-tabela: #f0f0f0; /* Texto bem claro para tabelas */
     --cor-borda-tabela: #3a3a3a;
-    --cor-fundo-cabecalho-tabela: #2c2c2c; /* Fundo do cabeçalho mais escuro */
-    --cor-fundo-linha-alternada-tabela: #232323; /* Para table-striped */
-    --cor-fundo-linha-hover-tabela: #2a2a2a;    /* Para table-hover */
+    --cor-fundo-cabecalho-tabela: #2c2c2c;
+    --cor-fundo-linha-tabela: var(--cor-fundo-tabela); /* Fundo de uma célula/linha normal no modo escuro */
+    --cor-fundo-linha-alternada-tabela: #232323;
+    --cor-fundo-linha-hover-tabela: #2a2a2a;
+
+    /* Sobrescrevendo variáveis Bootstrap para tabelas no modo escuro */
+    --bs-table-bg: var(--cor-fundo-linha-tabela);
+    --bs-table-color: var(--cor-texto-tabela);
+    --bs-table-border-color: var(--cor-borda-tabela);
+    --bs-table-striped-bg: var(--cor-fundo-linha-alternada-tabela);
+    --bs-table-striped-color: var(--cor-texto-tabela);
+    --bs-table-hover-bg: var(--cor-fundo-linha-hover-tabela);
+    --bs-table-hover-color: var(--cor-texto-tabela);
 }
 
 /* Estilo base do corpo */
 body {
     background-color: var(--cor-fundo);
     color: var(--cor-texto);
-    font-family: sans-serif; /* Considere usar a pilha de fontes do Bootstrap se quiser consistência total */
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", "Noto Sans", "Liberation Sans", Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji"; /* Pilha de fontes do Bootstrap */
     transition: background-color 0.2s ease-in-out, color 0.2s ease-in-out;
+    margin: 0; /* Remove margens padrão do body */
+    padding: 0; /* Remove preenchimentos padrão do body */
 }
 
 /* Sobrescrevendo o bg-light do Bootstrap quando o modo escuro está ativo */
 body.dark-mode.bg-light,
-body.dark-mode .bg-light { /* Para elementos filhos que possam ter bg-light */
-    background-color: var(--cor-fundo) !important; /* !important pode ser necessário */
+body.dark-mode .bg-light {
+    background-color: var(--cor-fundo) !important;
     color: var(--cor-texto);
 }
-body.dark-mode .container { /* Garante que o container também pegue o fundo */
+body.dark-mode .container,
+body.dark-mode .container-fluid { /* Adicionado container-fluid */
      background-color: var(--cor-fundo);
 }
-
 
 /* Cabeçalhos */
 body.dark-mode h1,
@@ -111,15 +163,16 @@ body.dark-mode a:hover {
     color: var(--cor-link-hover);
 }
 
-/* Cards (usados no formulário do dashboard) */
+/* Cards */
 body.dark-mode .card {
     background-color: var(--cor-fundo-card);
     border-color: var(--cor-borda);
 }
-body.dark-mode .card .card-header, /* Se usar card-header */
-body.dark-mode .card .card-title,  /* Se usar card-title dentro do card */
-body.dark-mode .card h5,
-body.dark-mode .card label {
+body.dark-mode .card .card-header,
+body.dark-mode .card .card-title,
+body.dark-mode .card h5, /* Se h5 for usado como título dentro do card */
+body.dark-mode .card label,
+body.dark-mode .card .card-text { /* Para texto geral dentro do card */
     color: var(--cor-texto);
 }
 
@@ -132,21 +185,24 @@ body.dark-mode .form-select {
 }
 body.dark-mode .form-control:focus,
 body.dark-mode .form-select:focus {
-    background-color: var(--cor-fundo-input); /* Mantém cor no foco */
+    background-color: var(--cor-fundo-input);
     color: var(--cor-texto-input);
-    border-color: var(--cor-link); /* Borda com cor de link no foco */
-    box-shadow: 0 0 0 0.25rem rgba(var(--cor-link-rgb, 13, 110, 253), 0.25); /* Adapta o box-shadow do Bootstrap */
+    border-color: var(--cor-link);
+    box-shadow: 0 0 0 0.25rem rgba(var(--bs-link-opacity,0.5),var(--bs-link-opacity,0.5),var(--bs-link-opacity,0.5),.25); /* Tentar adaptar o shadow do Bootstrap */
 }
 body.dark-mode .form-control::placeholder {
-    color: #868e96; /* Placeholder mais suave */
+    color: #868e96;
 }
-body.dark-mode .form-check-input { /* Para checkboxes e radios */
+body.dark-mode .form-check-input {
     background-color: var(--cor-fundo-input);
     border-color: var(--cor-borda-input);
 }
 body.dark-mode .form-check-input:checked {
     background-color: var(--cor-link);
     border-color: var(--cor-link);
+}
+body.dark-mode .form-check-label { /* Label de checkboxes/radios */
+    color: var(--cor-texto);
 }
 
 /* Botões Bootstrap */
@@ -170,10 +226,16 @@ body.dark-mode .btn-danger {
     border-color: var(--cor-fundo-botao-perigo);
     color: var(--cor-texto-botao-perigo);
 }
+body.dark-mode .btn-info {
+    background-color: var(--cor-fundo-botao-info);
+    border-color: var(--cor-fundo-botao-info);
+    color: var(--cor-texto-botao-info);
+}
+
 /* Botões Outline */
 body.dark-mode .btn-outline-primary {
-    color: var(--cor-link);
-    border-color: var(--cor-link);
+    color: var(--cor-texto-botao-outline-primario);
+    border-color: var(--cor-borda-botao-outline-primario);
 }
 body.dark-mode .btn-outline-primary:hover {
     background-color: var(--cor-fundo-botao-outline-primario-hover);
@@ -187,97 +249,95 @@ body.dark-mode .btn-outline-secondary:hover {
     background-color: var(--cor-fundo-botao-outline-secundario-hover);
     color: var(--cor-texto-botao-outline-secundario-hover);
 }
-body.dark-mode .btn-outline-danger { /* Exemplo para o botão Sair */
-    color: var(--cor-fundo-botao-perigo);
-    border-color: var(--cor-fundo-botao-perigo);
+body.dark-mode .btn-outline-danger {
+    color: var(--cor-texto-botao-outline-perigo);
+    border-color: var(--cor-borda-botao-outline-perigo);
 }
 body.dark-mode .btn-outline-danger:hover {
-    background-color: var(--cor-fundo-botao-perigo);
-    color: var(--cor-texto-botao-perigo);
+    background-color: var(--cor-fundo-botao-outline-perigo-hover);
+    color: var(--cor-texto-botao-outline-perigo-hover);
 }
 
 
-/* Tabelas Bootstrap */
+/* Tabelas Bootstrap - Aplicando as variáveis do Bootstrap diretamente */
 body.dark-mode .table {
-    color: var(--cor-texto-tabela);
-    border-color: var(--cor-borda-tabela);
-    background-color: var(--cor-fundo-tabela); /* Fundo base da tabela */
+    /* As variáveis --bs-table-* já foram definidas dentro de body.dark-mode no topo */
+    /* Esta regra apenas garante que a classe .table use essas variáveis */
 }
 
-body.dark-mode .table th, /* Cabeçalhos e células */
-body.dark-mode .table td {
-    border-color: var(--cor-borda-tabela); /* Garante que as bordas internas usem a cor certa */
-}
-
-body.dark-mode .table > :not(caption) > * > * { /* Seletor mais genérico do Bootstrap para células */
-    background-color: var(--bs-table-bg); /* Deixa o Bootstrap controlar ou defina aqui */
-    /* Se quiser forçar o fundo da célula: background-color: var(--cor-fundo-tabela); */
-}
-
-
-body.dark-mode .table thead th {
+/* Se o cabeçalho da tabela não for .table-dark, mas sim o padrão */
+body.dark-mode .table > thead > tr > th {
     background-color: var(--cor-fundo-cabecalho-tabela);
     color: var(--cor-texto-tabela);
-    border-bottom-width: 2px; /* Destaca mais o cabeçalho */
     border-bottom-color: var(--cor-borda-tabela);
+    border-top-color: var(--cor-borda-tabela); /* Adicionado para consistência */
 }
 
-/* Tabela Listrada (table-striped) */
-body.dark-mode .table-striped > tbody > tr:nth-of-type(odd) > * {
-    --bs-table-accent-bg: var(--cor-fundo-linha-alternada-tabela); /* Usa a variável para a cor da linha ímpar */
-    color: var(--cor-texto-tabela);
+/* Células da tabela (tbody e tfoot) */
+body.dark-mode .table > tbody > tr > td,
+body.dark-mode .table > tbody > tr > th,
+body.dark-mode .table > tfoot > tr > td,
+body.dark-mode .table > tfoot > tr > th {
+    /* O fundo será controlado pelas variáveis --bs-table-bg ou --bs-table-striped-bg */
+    /* A cor do texto será controlada por --bs-table-color ou --bs-table-striped-color */
+    /* A borda será controlada por --bs-table-border-color */
+    /* Não é necessário definir background-color ou color aqui diretamente se as vars --bs-* estiverem corretas */
 }
-body.dark-mode .table-striped > tbody > tr:nth-of-type(even) > * {
-     /* Para linhas pares, se quiser uma cor diferente da base da tabela, defina aqui.
-        Senão, ela herdará o fundo da .table ou da célula.
-        Exemplo: --bs-table-accent-bg: #282828; */
-    color: var(--cor-texto-tabela);
+
+/* Para o cabeçalho .table-dark que você usa no balancete.html */
+body.dark-mode .table .table-dark { /* Mais específico */
+    --bs-table-bg: #343a40; /* Cor de fundo escura do Bootstrap para .table-dark */
+    --bs-table-color: #fff; /* Cor de texto branca do Bootstrap para .table-dark */
+    --bs-table-border-color: #454d55; /* Cor de borda do Bootstrap para .table-dark */
 }
 
 
-/* Tabela com Hover (table-hover) */
-body.dark-mode .table-hover > tbody > tr:hover > * {
-    --bs-table-accent-bg: var(--cor-fundo-linha-hover-tabela);
-    color: var(--cor-texto-tabela);
-}
-
-/* Tabela com Bordas (table-bordered) */
-body.dark-mode .table-bordered {
-    border-color: var(--cor-borda-tabela);
-}
-/* As bordas internas já devem ser cobertas por .table th, .table td */
-
-/* Paginação (se usar) */
+/* Paginação */
 body.dark-mode .pagination .page-link {
     background-color: var(--cor-fundo-input);
     border-color: var(--cor-borda-input);
     color: var(--cor-link);
 }
 body.dark-mode .pagination .page-link:hover {
-    background-color: #383838; /* Um pouco mais claro no hover */
+    background-color: #383838;
     border-color: var(--cor-borda-input);
 }
 body.dark-mode .pagination .page-item.active .page-link {
     background-color: var(--cor-link);
     border-color: var(--cor-link);
-    color: var(--cor-fundo); /* Texto claro sobre fundo de link */
+    color: var(--cor-fundo);
 }
 body.dark-mode .pagination .page-item.disabled .page-link {
     background-color: var(--cor-fundo-input);
     border-color: var(--cor-borda-input);
-    color: #6c757d; /* Cor desabilitada */
+    color: #6c757d;
 }
 
-/* Ajustes para o Chart.js (idealmente via JavaScript) */
-/* Se o Chart.js usar fontes do sistema, a cor do texto do body pode ser herdada.
-   Para cores de eixos, legendas, títulos, o ideal é atualizar o objeto de opções do gráfico
-   via JavaScript quando o tema é alterado, como comentado anteriormente. */
-body.dark-mode .chartjs-legend-item-text, /* Exemplo se o Chart.js usar classes assim */
-body.dark-mode .chartjs-title-text,
-body.dark-mode .chartjs-axis-label {
-    fill: var(--cor-texto) !important; /* Tentar forçar cor do texto para SVGs */
-    color: var(--cor-texto) !important; /* Para elementos HTML */
+/* Alertas Bootstrap */
+body.dark-mode .alert-success {
+    background-color: #0f5132; /* Verde escuro */
+    color: #75b798;
+    border-color: #146c43;
 }
+body.dark-mode .alert-danger {
+    background-color: #58151c; /* Vermelho escuro */
+    color: #f1aeb5;
+    border-color: #842029;
+}
+body.dark-mode .alert-warning {
+    background-color: #664d03; /* Amarelo/Laranja escuro */
+    color: #ffda6a;
+    border-color: #997404;
+}
+body.dark-mode .alert-info {
+    background-color: #055160; /* Azul/Ciano escuro */
+    color: #6edff6;
+    border-color: #087990;
+}
+body.dark-mode .alert .btn-close { /* Botão de fechar alerta */
+    filter: invert(1) grayscale(100%) brightness(200%); /* Deixa o X branco */
+}
+
 
 /* Scrollbar (opcional, para navegadores baseados em WebKit como Chrome/Edge/Safari) */
 body.dark-mode ::-webkit-scrollbar {
