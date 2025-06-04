@@ -12,5 +12,25 @@
         "tipo": "C",
         "valor": 1500.0,
         "historico": "pagamento de clientes"
+    },
+    {
+        "id": 3,
+        "data": "2025-06-04 15:45:01",
+        "conta_cod": "101",
+        "conta_nome": "Caixa",
+        "tipo": "D",
+        "valor": 10000.0,
+        "historico": "Recebimento de aluguel",
+        "usuario": "admin"
+    },
+    {
+        "id": 4,
+        "data": "2025-06-04 15:45:24",
+        "conta_cod": "201",
+        "conta_nome": "Fornecedores",
+        "tipo": "C",
+        "valor": 1000.0,
+        "historico": "pagamento do aluguel",
+        "usuario": "admin"
     }
 ]
