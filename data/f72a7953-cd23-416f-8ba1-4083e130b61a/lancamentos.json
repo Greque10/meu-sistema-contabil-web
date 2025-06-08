@@ -1,0 +1,12 @@
+[
+    {
+        "id": 1,
+        "data": "2025-06-05 20:57:15",
+        "conta_cod": "10102",
+        "conta_nome": "Bancos Conta Movimento",
+        "tipo": "D",
+        "valor": 1000.0,
+        "historico": "Hoje",
+        "usuario": "Bodefuceta"
+    }
+]

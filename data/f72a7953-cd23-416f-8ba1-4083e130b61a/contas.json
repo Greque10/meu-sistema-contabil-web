@@ -1,0 +1,38 @@
+{
+    "10101": {
+        "nome": "Caixa Geral",
+        "natureza": "D"
+    },
+    "10102": {
+        "nome": "Bancos Conta Movimento",
+        "natureza": "D"
+    },
+    "20101": {
+        "nome": "Fornecedores Nacionais",
+        "natureza": "C"
+    },
+    "20102": {
+        "nome": "Salários a Pagar",
+        "natureza": "C"
+    },
+    "30101": {
+        "nome": "Receita Bruta de Vendas",
+        "natureza": "C"
+    },
+    "30102": {
+        "nome": "Receita de Serviços",
+        "natureza": "C"
+    },
+    "40101": {
+        "nome": "Custo das Mercadorias Vendidas (CMV)",
+        "natureza": "D"
+    },
+    "40102": {
+        "nome": "Despesas com Aluguel",
+        "natureza": "D"
+    },
+    "40103": {
+        "nome": "Despesas com Salários",
+        "natureza": "D"
+    }
+}
