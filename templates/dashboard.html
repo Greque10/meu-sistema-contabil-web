@@ -73,6 +73,7 @@
                     <a href="{{ url_for('razao') }}" class="btn btn-secondary">📗 Livro Razão</a>
                     <a href="{{ url_for('balancete') }}" class="btn btn-secondary">📒 Balancete</a>
                     <a href="{{ url_for('grafico_data') }}" class="btn btn-info">📈 Gráfico por Data</a>
+                    <a href="{{ url_for('historico_alteracoes') }}" class="btn btn-light border">📜 Histórico de Alterações</a>
                 </div>
 
                 {% if admin_da_empresa and session.get('usuario') == admin_da_empresa %}

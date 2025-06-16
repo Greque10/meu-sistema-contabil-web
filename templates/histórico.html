@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Histórico de Alterações - {{ nome_empresa if nome_empresa else "Sistema Contábil" }}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body class="bg-light">
+    <div class="container-fluid mt-4">
+        <div class="d-flex justify-content-between align-items-center mb-3 px-3">
+            <h2>📜 Histórico de Alterações <small class="text-muted fs-6">({{ nome_empresa }})</small></h2>
+            <div>
+                <button id="darkModeToggle" class="btn btn-outline-secondary me-2">Modo Escuro</button>
+                <a href="{{ url_for('dashboard') }}" class="btn btn-primary">← Voltar ao Dashboard</a>
+            </div>
+        </div>
+
+        {% if historico %}
+            <div class="table-responsive px-3">
+                <table class="table table-sm table-bordered table-striped table-hover">
+                    <thead class="table-dark">
+                        <tr>
+                            <th scope="col">Data/Hora</th>
+                            <th scope="col">Utilizador</th>
+                            <th scope="col">Ação</th>
+                            <th scope="col">ID Lançamento</th>
+                            <th scope="col">Detalhes da Alteração</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for log in historico %}
+                        <tr>
+                            <td class="small">{{ log.timestamp }}</td>
+                            <td class="small">{{ log.usuario }}</td>
+                            <td>
+                                {% if log.acao == 'CRIACAO' %}
+                                    <span class="badge bg-success">Criação</span>
+                                {% elif log.acao == 'EDICAO' %}
+                                    <span class="badge bg-warning text-dark">Edição</span>
+                                {% elif log.acao == 'EXCLUSAO' %}
+                                    <span class="badge bg-danger">Exclusão</span>
+                                {% else %}
+                                    <span class="badge bg-secondary">{{ log.acao }}</span>
+                                {% endif %}
+                            </td>
+                            <td class="small text-center">{{ log.lancamento_id }}</td>
+                            <td class="small">
+                                {% if log.acao == 'CRIACAO' and log.dados_novos %}
+                                    <p class="mb-1"><strong>Novo Lançamento:</strong></p>
+                                    <pre class="bg-light p-2 rounded small"><code>{{ log.dados_novos | tojson(indent=2) }}</code></pre>
+                                {% elif log.acao == 'EXCLUSAO' and log.dados_anteriores %}
+                                    <p class="mb-1"><strong>Lançamento Excluído:</strong></p>
+                                    <pre class="bg-light p-2 rounded small"><code>{{ log.dados_anteriores | tojson(indent=2) }}</code></pre>
+                                {% elif log.acao == 'EDICAO' %}
+                                    <p class="mb-1"><strong>Dados Anteriores:</strong></p>
+                                    <pre class="bg-light p-2 rounded small"><code>{{ log.dados_anteriores | tojson(indent=2) }}</code></pre>
+                                    <p class="mb-1 mt-2"><strong>Dados Novos:</strong></p>
+                                    <pre class="bg-light p-2 rounded small"><code>{{ log.dados_novos | tojson(indent=2) }}</code></pre>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="alert alert-info mx-3" role="alert">
+                Nenhum histórico de alterações encontrado.
+            </div>
+        {% endif %}
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>
