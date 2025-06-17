@@ -25,24 +25,21 @@ ARQUIVO_EMPRESAS = os.path.join(BASE_DIR, 'empresas.json')
 NOME_ARQUIVO_LANCAMENTOS = 'lancamentos.json'
 NOME_ARQUIVO_USUARIOS = 'usuarios.json'
 NOME_ARQUIVO_CONTAS = 'contas.json'
-NOME_ARQUIVO_HISTORICO = 'historico_lancamentos.json' # NOVO ARQUIVO DE LOG
+NOME_ARQUIVO_HISTORICO = 'historico_lancamentos.json'
 
-# --- Funções Auxiliares Globais ---
+# --- Funções Auxiliares (Completas) ---
 def carregar_empresas():
-    if not os.path.exists(ARQUIVO_EMPRESAS):
-        return {}
+    if not os.path.exists(ARQUIVO_EMPRESAS): return {}
     try:
         with open(ARQUIVO_EMPRESAS, 'r', encoding='utf-8') as f:
             content = f.read()
             return json.loads(content) if content else {}
-    except (json.JSONDecodeError, FileNotFoundError):
-        return {}
+    except (json.JSONDecodeError, FileNotFoundError): return {}
 
 def salvar_empresas(empresas):
     with open(ARQUIVO_EMPRESAS, 'w', encoding='utf-8') as f:
         json.dump(empresas, f, indent=4, ensure_ascii=False)
 
-# --- Funções Auxiliares Específicas da Empresa ---
 def obter_caminho_arquivo_empresa(id_empresa, nome_arquivo):
     return os.path.join(DATA_DIR, str(id_empresa), nome_arquivo)
 
@@ -94,29 +91,19 @@ def carregar_contas_empresa(id_empresa):
         return plano_de_contas_inicial
     return contas
 
-# --- NOVAS FUNÇÕES AUXILIARES PARA HISTÓRICO ---
 def carregar_historico_empresa(id_empresa):
-    """Carrega o histórico de alterações de uma empresa específica."""
     return carregar_dados_empresa(id_empresa, NOME_ARQUIVO_HISTORICO)
 
 def salvar_historico_empresa(id_empresa, historico):
-    """Salva o histórico de alterações de uma empresa específica."""
     salvar_dados_empresa(id_empresa, historico, NOME_ARQUIVO_HISTORICO)
 
 def registrar_no_historico(id_empresa, usuario, acao, lancamento_id, dados_anteriores=None, dados_novos=None):
-    """Regista uma ação no ficheiro de histórico da empresa."""
     historico = carregar_historico_empresa(id_empresa)
-    
     entrada_log = {
-        "log_id": len(historico) + 1,
-        "timestamp": datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
-        "usuario": usuario,
-        "acao": acao, # ex: 'CRIACAO', 'EDICAO', 'EXCLUSAO'
-        "lancamento_id": lancamento_id, # ID do lançamento afetado
-        "dados_anteriores": dados_anteriores, # Como o lançamento era ANTES da alteração
-        "dados_novos": dados_novos       # Como o lançamento ficou DEPOIS da alteração
+        "log_id": len(historico) + 1, "timestamp": datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+        "usuario": usuario, "acao": acao, "lancamento_id": lancamento_id,
+        "dados_anteriores": dados_anteriores, "dados_novos": dados_novos
     }
-    
     historico.append(entrada_log)
     salvar_historico_empresa(id_empresa, historico)
 
@@ -126,7 +113,7 @@ def verificar_sessao_empresa():
         return False
     return True
 
-# --- Funções de Geração de PDF Comuns ---
+# ... (Funções de Geração de PDF - Mantenha as suas) ...
 def _rodape_pdf_simples(canvas, doc):
     canvas.saveState()
     canvas.setFont('Helvetica', 8)
@@ -147,6 +134,7 @@ def _cabecalho_relatorio_pdf(story, styles, nome_empresa, titulo_relatorio):
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
+    # ... (Mantenha a sua rota de login como está) ...
     if request.method == 'POST':
         usuario_form = request.form['usuario']
         senha_form = request.form['senha']
@@ -169,10 +157,11 @@ def login():
 
 @app.route('/registrar_empresa', methods=['GET', 'POST'])
 def registrar_empresa():
+    # ... (Mantenha a sua rota de registro de empresa como está) ...
     if request.method == 'POST':
         nome_empresa = request.form.get('nome_empresa', '').strip()
         admin_usuario = request.form.get('admin_usuario', '').strip()
-        admin_senha = request.form.get('admin_senha', '')
+        admin_senha = request.form.get('admin_senha', '') 
         if not nome_empresa or not admin_usuario or not admin_senha:
             flash('Todos os campos são obrigatórios.', 'warning')
             return render_template('registrar_empresa.html', nome_empresa=nome_empresa, admin_usuario=admin_usuario)
@@ -180,19 +169,20 @@ def registrar_empresa():
         if any(emp['nome'].lower() == nome_empresa.lower() for emp in empresas.values()):
             flash('Já existe uma empresa registada com este nome.', 'warning')
             return render_template('registrar_empresa.html', nome_empresa=nome_empresa, admin_usuario=admin_usuario)
-        for id_emp_existente in empresas:
+        for id_emp_existente in empresas: 
             usuarios_existentes = carregar_usuarios_empresa(id_emp_existente)
-            if admin_usuario in usuarios_existentes:
+            if admin_usuario in usuarios_existentes: 
                 flash(f'O nome de utilizador "{admin_usuario}" já está em uso. Escolha outro.', 'warning')
                 return render_template('registrar_empresa.html', nome_empresa=nome_empresa, admin_usuario=admin_usuario)
+
         id_nova_empresa = str(uuid.uuid4())
         caminho_pasta_nova_empresa = os.path.join(DATA_DIR, id_nova_empresa)
         os.makedirs(caminho_pasta_nova_empresa, exist_ok=True)
         usuarios_nova_empresa = {admin_usuario: admin_senha}
         salvar_usuarios_empresa(id_nova_empresa, usuarios_nova_empresa)
         salvar_lancamentos_empresa(id_nova_empresa, [])
-        carregar_contas_empresa(id_nova_empresa)
-        salvar_historico_empresa(id_nova_empresa, []) # Cria ficheiro de histórico vazio para nova empresa
+        carregar_contas_empresa(id_nova_empresa) 
+        salvar_historico_empresa(id_nova_empresa, [])
         empresas[id_nova_empresa] = {"nome": nome_empresa, "admin_user": admin_usuario}
         salvar_empresas(empresas)
         flash(f'Empresa "{nome_empresa}" e utilizador admin "{admin_usuario}" registados com sucesso! Faça o login.', 'success')
@@ -201,12 +191,14 @@ def registrar_empresa():
 
 @app.route('/logout')
 def logout():
+    # ... (Mantenha a sua rota de logout como está) ...
     session.pop('usuario', None)
     session.pop('id_empresa', None)
     session.pop('nome_empresa', None)
     flash('Você foi desconectado.', 'info')
     return redirect(url_for('login'))
 
+# --- ROTA DASHBOARD CORRIGIDA (PARTIDAS DOBRADAS) ---
 @app.route('/', methods=['GET', 'POST'])
 def dashboard():
     if not verificar_sessao_empresa():
@@ -219,13 +211,11 @@ def dashboard():
     admin_da_empresa_atual = empresas.get(id_empresa_atual, {}).get('admin_user')
 
     if request.method == 'POST':
-        # Obter dados do novo formulário
         conta_debito_cod = request.form.get('conta_debito')
         conta_credito_cod = request.form.get('conta_credito')
         valor_str = request.form.get('valor')
         historico = request.form.get('historico', '').strip()
         
-        # Validações
         if not all([conta_debito_cod, conta_credito_cod, valor_str, historico]):
             flash('Todos os campos da transação são obrigatórios.', 'warning')
         elif conta_debito_cod == conta_credito_cod:
@@ -237,54 +227,31 @@ def dashboard():
                     flash('O valor da transação deve ser positivo.', 'warning')
                 else:
                     data_atual = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-                    # Gerar um ID único para esta transação específica
                     transacao_id = str(uuid.uuid4())
                     
-                    # Obter nomes das contas
                     conta_debito_obj = contas.get(conta_debito_cod, {})
                     nome_conta_debito = conta_debito_obj.get('nome', 'Conta Desconhecida') if isinstance(conta_debito_obj, dict) else conta_debito_obj
-
                     conta_credito_obj = contas.get(conta_credito_cod, {})
                     nome_conta_credito = conta_credito_obj.get('nome', 'Conta Desconhecida') if isinstance(conta_credito_obj, dict) else conta_credito_obj
 
-                    # Criar o lançamento de DÉBITO
                     lancamento_debito = {
-                        'id': str(uuid.uuid4()), # ID único para a linha
-                        'transacao_id': transacao_id, # ID para agrupar a transação
-                        'data': data_atual,
-                        'conta_cod': conta_debito_cod,
-                        'conta_nome': nome_conta_debito,
-                        'tipo': 'D',
-                        'valor': valor,
-                        'historico': historico,
-                        'usuario': session.get('usuario')
+                        'id': str(uuid.uuid4()), 'transacao_id': transacao_id, 'data': data_atual,
+                        'conta_cod': conta_debito_cod, 'conta_nome': nome_conta_debito,
+                        'tipo': 'D', 'valor': valor, 'historico': historico, 'usuario': session.get('usuario')
                     }
-                    
-                    # Criar o lançamento de CRÉDITO
                     lancamento_credito = {
-                        'id': str(uuid.uuid4()), # ID único para a linha
-                        'transacao_id': transacao_id, # Mesmo ID da transação
-                        'data': data_atual,
-                        'conta_cod': conta_credito_cod,
-                        'conta_nome': nome_conta_credito,
-                        'tipo': 'C',
-                        'valor': valor,
-                        'historico': historico,
-                        'usuario': session.get('usuario')
+                        'id': str(uuid.uuid4()), 'transacao_id': transacao_id, 'data': data_atual,
+                        'conta_cod': conta_credito_cod, 'conta_nome': nome_conta_credito,
+                        'tipo': 'C', 'valor': valor, 'historico': historico, 'usuario': session.get('usuario')
                     }
 
-                    # Adicionar os dois lançamentos à lista
                     lancamentos.append(lancamento_debito)
                     lancamentos.append(lancamento_credito)
                     salvar_lancamentos_empresa(id_empresa_atual, lancamentos)
                     
-                    # Registar no histórico (pode ser uma entrada única para a transação)
-                    # Opcional: ajustar a função de histórico para lidar com transações
-                    registrar_no_historico(
-                        id_empresa=id_empresa_atual, usuario=session.get('usuario'), 
-                        acao='CRIACAO_TRANSACAO', lancamento_id=transacao_id, 
-                        dados_novos={"debito": lancamento_debito, "credito": lancamento_credito}
-                    )
+                    registrar_no_historico(id_empresa=id_empresa_atual, usuario=session.get('usuario'), 
+                                           acao='CRIACAO_TRANSACAO', lancamento_id=transacao_id, 
+                                           dados_novos={"debito": lancamento_debito, "credito": lancamento_credito})
                     
                     flash('Transação registrada com sucesso!', 'success')
                     return redirect(url_for('dashboard'))
@@ -292,20 +259,17 @@ def dashboard():
             except ValueError:
                 flash('Valor inválido inserido.', 'danger')
         
-    # Lógica do GET (mantenha como está)
+    # Lógica do GET ou se houve erro no POST
     total_d = sum(float(l.get('valor', 0)) for l in lancamentos if l.get('tipo') == 'D')
     total_c = sum(float(l.get('valor', 0)) for l in lancamentos if l.get('tipo') == 'C')
     dados_despesas_pizza = preparar_dados_despesas_pizza(lancamentos)
     return render_template('dashboard.html', 
-                           usuario=session.get('usuario'), 
-                           nome_empresa=session.get('nome_empresa'), 
-                           contas=contas, 
-                           total_d=total_d, 
-                           total_c=total_c,
-                           admin_da_empresa=admin_da_empresa_atual,
-                           dados_despesas_pizza=dados_despesas_pizza)
+                           usuario=session.get('usuario'), nome_empresa=session.get('nome_empresa'), 
+                           contas=contas, total_d=total_d, total_c=total_c,
+                           admin_da_empresa=admin_da_empresa_atual, dados_despesas_pizza=dados_despesas_pizza)
 
 def preparar_dados_despesas_pizza(lancamentos):
+    # ... (Mantenha a sua função como está) ...
     despesas_por_conta = {}
     for lanc in lancamentos:
         if lanc.get('tipo') == 'D':
@@ -313,14 +277,13 @@ def preparar_dados_despesas_pizza(lancamentos):
                 valor = float(lanc.get('valor', 0))
                 nome_conta = lanc.get('conta_nome', 'Desconhecida') 
                 despesas_por_conta[nome_conta] = despesas_por_conta.get(nome_conta, 0) + valor
-            except ValueError:
-                continue
+            except ValueError: continue
     return {'labels': list(despesas_por_conta.keys()), 'data': list(despesas_por_conta.values())}
 
 @app.route('/cadastro', methods=['GET', 'POST'])
 def cadastro():
-    if not verificar_sessao_empresa():
-        return redirect(url_for('login'))
+    # ... (Mantenha a sua rota de cadastro de usuário como está) ...
+    if not verificar_sessao_empresa(): return redirect(url_for('login'))
     id_empresa_atual = session['id_empresa']
     empresas = carregar_empresas()
     dados_empresa_atual = empresas.get(id_empresa_atual)
@@ -343,6 +306,7 @@ def cadastro():
                 flash(f'Utilizador "{novo_usuario_form}" registado com sucesso para a empresa!', 'success')
     return render_template('cadastro.html', usuario=usuario_logado_admin, nome_empresa=session.get('nome_empresa'))
 
+# --- ROTAS DE DIÁRIO CORRIGIDAS (EDITAR/EXCLUIR POR ID) ---
 @app.route('/diario')
 def diario():
     if not verificar_sessao_empresa():
@@ -359,6 +323,7 @@ def editar_lancamento(lancamento_id):
     id_empresa_atual = session['id_empresa']
     lancamentos = carregar_lancamentos_empresa(id_empresa_atual)
     contas = carregar_contas_empresa(id_empresa_atual)
+    
     lancamento_para_editar = None
     lancamento_idx = None
     for i, l in enumerate(lancamentos):
@@ -366,11 +331,15 @@ def editar_lancamento(lancamento_id):
             lancamento_para_editar = l
             lancamento_idx = i
             break
+
     if lancamento_para_editar is None:
         flash('Lançamento não encontrado.', 'danger')
         return redirect(url_for('diario'))
+
     lancamento_original = json.loads(json.dumps(lancamento_para_editar))
+
     if request.method == 'POST':
+        # ... (Sua lógica de POST da edição, já com registro no histórico) ...
         nova_data_str = request.form.get('data_lancamento')
         nova_conta_cod = request.form.get('conta')
         novo_tipo = request.form.get('tipo')
@@ -388,6 +357,7 @@ def editar_lancamento(lancamento_id):
                     data_final_para_salvar = data_lanc_original_dt.replace(year=nova_data_dt.year, month=nova_data_dt.month, day=nova_data_dt.day).strftime('%Y-%m-%d %H:%M:%S')
                     conta_obj_edit = contas.get(nova_conta_cod)
                     nome_conta_final = conta_obj_edit if isinstance(conta_obj_edit, str) else (conta_obj_edit.get('nome') if isinstance(conta_obj_edit, dict) else "Conta Desconhecida")
+                    
                     lancamentos[lancamento_idx]['data'] = data_final_para_salvar
                     lancamentos[lancamento_idx]['conta_cod'] = nova_conta_cod
                     lancamentos[lancamento_idx]['conta_nome'] = nome_conta_final
@@ -395,13 +365,17 @@ def editar_lancamento(lancamento_id):
                     lancamentos[lancamento_idx]['valor'] = novo_valor
                     lancamentos[lancamento_idx]['historico'] = novo_historico
                     salvar_lancamentos_empresa(id_empresa_atual, lancamentos)
+                    
                     registrar_no_historico(id_empresa=id_empresa_atual, usuario=session.get('usuario'), acao='EDICAO', lancamento_id=lancamento_id, dados_anteriores=lancamento_original, dados_novos=lancamentos[lancamento_idx])
+                    
                     flash('Lançamento atualizado com sucesso!', 'success')
                     return redirect(url_for('diario'))
             except ValueError: flash('Valor ou formato de data inválido.', 'danger')
+        
         lanc_form = {'id': lancamento_id, 'data': nova_data_str, 'conta_cod': nova_conta_cod, 'tipo': novo_tipo, 'valor': novo_valor_str, 'historico': novo_historico}
         return render_template('editar_lancamento.html', lancamento=lanc_form, lancamento_original_data_str=nova_data_str, contas=contas, usuario=session.get('usuario'), nome_empresa=session.get('nome_empresa'))
-    data_para_input = datetime.strptime(lancamento_original['data'], '%Y-%m-%d %H:%M:%S').strftime('%Y-%m-%d')
+
+    data_para_input = datetime.strptime(lancamento_original.get('data'), '%Y-%m-%d %H:%M:%S').strftime('%Y-%m-%d')
     return render_template('editar_lancamento.html', lancamento=lancamento_original, lancamento_original_data_str=data_para_input, contas=contas, usuario=session.get('usuario'), nome_empresa=session.get('nome_empresa'))
 
 @app.route('/diario/excluir/<lancamento_id>', methods=['POST'])
@@ -423,12 +397,11 @@ def excluir_lancamento(lancamento_id):
         flash('Erro ao excluir: Lançamento não encontrado.', 'danger')
     return redirect(url_for('diario'))
 
-# --- NOVA ROTA PARA VISUALIZAR HISTÓRICO ---
+# --- ROTA DE HISTÓRICO ---
 @app.route('/historico')
 def historico_alteracoes():
     if not verificar_sessao_empresa():
         return redirect(url_for('login'))
-    
     id_empresa_atual = session['id_empresa']
     historico_completo = carregar_historico_empresa(id_empresa_atual)
     historico_ordenado = sorted(historico_completo, key=lambda x: x.get('timestamp', ''), reverse=True)
