@@ -16,7 +16,6 @@
                 <a href="{{ url_for('diario') }}" class="btn btn-secondary">← Voltar ao Livro Diário</a>
             </div>
         </div>
-
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
                 {% for category, message in messages %}
@@ -27,13 +26,11 @@
                 {% endfor %}
             {% endif %}
         {% endwith %}
-
         <div class="card shadow-sm">
             <div class="card-body p-4">
-                <form method="POST" action="{{ url_for('editar_lancamento', lancamento_idx=lancamento_idx) }}">
+                <form method="POST" action="{{ url_for('editar_lancamento', lancamento_id=lancamento.id) }}">
                     <div class="mb-3">
                         <label for="data_lancamento" class="form-label">Data do Lançamento:</label>
-                        <!-- O valor é preenchido com lancamento_original_data_str (formato AAAA-MM-DD) -->
                         <input type="date" class="form-control" id="data_lancamento" name="data_lancamento" 
                                value="{{ lancamento_original_data_str if lancamento_original_data_str else '' }}" required>
                     </div>
@@ -74,7 +71,6 @@
             </div>
         </div>
     </div>
-
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="{{ url_for('static', filename='script.js') }}"></script>
 </body>
