@@ -1,1 +1,72 @@
-[]
+[
+    {
+        "log_id": 1,
+        "timestamp": "2025-06-17 23:13:18",
+        "usuario": "Jorge",
+        "acao": "CRIACAO_TRANSACAO",
+        "lancamento_id": "fc80172e-287d-4bd8-aa83-c4edf2fb6993",
+        "dados_anteriores": null,
+        "dados_novos": {
+            "debito": {
+                "id": "e318c69b-eb18-4027-bb95-aad75d507d8c",
+                "transacao_id": "fc80172e-287d-4bd8-aa83-c4edf2fb6993",
+                "data": "2025-06-17 23:13:18",
+                "conta_cod": "10101",
+                "conta_nome": "Caixa Geral",
+                "tipo": "D",
+                "valor": 123123.0,
+                "historico": "10000",
+                "usuario": "Jorge"
+            },
+            "credito": {
+                "id": "35f8c5cb-0620-4c39-afdb-59fc41e0795c",
+                "transacao_id": "fc80172e-287d-4bd8-aa83-c4edf2fb6993",
+                "data": "2025-06-17 23:13:18",
+                "conta_cod": "20101",
+                "conta_nome": "Fornecedores Nacionais",
+                "tipo": "C",
+                "valor": 123123.0,
+                "historico": "10000",
+                "usuario": "Jorge"
+            }
+        }
+    },
+    {
+        "log_id": 2,
+        "timestamp": "2025-06-17 23:13:41",
+        "usuario": "Jorge",
+        "acao": "EXCLUSAO",
+        "lancamento_id": "e318c69b-eb18-4027-bb95-aad75d507d8c",
+        "dados_anteriores": {
+            "id": "e318c69b-eb18-4027-bb95-aad75d507d8c",
+            "transacao_id": "fc80172e-287d-4bd8-aa83-c4edf2fb6993",
+            "data": "2025-06-17 23:13:18",
+            "conta_cod": "10101",
+            "conta_nome": "Caixa Geral",
+            "tipo": "D",
+            "valor": 123123.0,
+            "historico": "10000",
+            "usuario": "Jorge"
+        },
+        "dados_novos": null
+    },
+    {
+        "log_id": 3,
+        "timestamp": "2025-06-17 23:13:42",
+        "usuario": "Jorge",
+        "acao": "EXCLUSAO",
+        "lancamento_id": "35f8c5cb-0620-4c39-afdb-59fc41e0795c",
+        "dados_anteriores": {
+            "id": "35f8c5cb-0620-4c39-afdb-59fc41e0795c",
+            "transacao_id": "fc80172e-287d-4bd8-aa83-c4edf2fb6993",
+            "data": "2025-06-17 23:13:18",
+            "conta_cod": "20101",
+            "conta_nome": "Fornecedores Nacionais",
+            "tipo": "C",
+            "valor": 123123.0,
+            "historico": "10000",
+            "usuario": "Jorge"
+        },
+        "dados_novos": null
+    }
+]

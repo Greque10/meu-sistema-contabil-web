@@ -34,54 +34,73 @@
         {% endwith %}
 
         <div class="row">
-            <div class="col-md-6">
-                <!-- FORMULÁRIO DE PARTIDAS DOBRADAS CORRIGIDO -->
+            <div class="col-lg-7">
+                <!-- FORMULÁRIO DE LANÇAMENTO MÚLTIPLO DINÂMICO -->
                 <div class="card shadow-sm p-4 mb-4">
-                    <h5 class="card-title mb-3">Registar Transação (Partidas Dobradas)</h5>
-                    <form method="POST" action="{{ url_for('dashboard') }}">
-                        <div class="row g-3">
-                            <div class="col-md-6">
-                                <label for="conta_debito" class="form-label"><strong>Conta a Debitar:</strong></label>
-                                <select name="conta_debito" id="conta_debito" class="form-select" required>
-                                    <option value="" disabled selected>Selecione a conta de débito...</option>
-                                    {% for cod, nome_conta_obj in contas.items() %}
-                                        {% set nome_exibicao = nome_conta_obj if nome_conta_obj is string else nome_conta_obj.get('nome', 'Desconhecida') %}
-                                        <option value="{{ cod }}">{{ nome_exibicao }} ({{ cod }})</option>
-                                    {% endfor %}
-                                </select>
-                            </div>
-                            
-                            <div class="col-md-6">
-                                <label for="conta_credito" class="form-label"><strong>Conta a Creditar:</strong></label>
-                                <select name="conta_credito" id="conta_credito" class="form-select" required>
-                                    <option value="" disabled selected>Selecione a conta de crédito...</option>
-                                    {% for cod, nome_conta_obj in contas.items() %}
-                                        {% set nome_exibicao = nome_conta_obj if nome_conta_obj is string else nome_conta_obj.get('nome', 'Desconhecida') %}
-                                        <option value="{{ cod }}">{{ nome_exibicao }} ({{ cod }})</option>
-                                    {% endfor %}
-                                </select>
+                    <h5 class="card-title mb-3">Registar Transação Contábil</h5>
+                    <form method="POST" action="{{ url_for('dashboard') }}" id="form-lancamento">
+                        <div class="mb-3">
+                            <label for="historico" class="form-label">Histórico da Transação:</label>
+                            <input name="historico" id="historico" class="form-control" required>
+                        </div>
+                        <hr>
+
+                        <!-- Linhas de Débito -->
+                        <h6>Partidas a Débito</h6>
+                        <div id="debit-entries">
+                            <!-- A primeira linha é fixa -->
+                            <div class="row g-2 mb-2 align-items-center debit-row">
+                                <div class="col-8">
+                                    <select name="conta_debito" class="form-select" required>
+                                        <option value="" disabled selected>Selecione a conta de débito...</option>
+                                        {% for cod, nome_conta_obj in contas.items() %}{% set nome_exibicao = nome_conta_obj if nome_conta_obj is string else nome_conta_obj.get('nome', 'Desconhecida') %}<option value="{{ cod }}">{{ nome_exibicao }} ({{ cod }})</option>{% endfor %}
+                                    </select>
+                                </div>
+                                <div class="col-4">
+                                    <input type="number" name="valor_debito" class="form-control valor-input" placeholder="Valor (R$)" step="0.01" min="0.01" required>
+                                </div>
                             </div>
                         </div>
+                        <button type="button" id="add-debit" class="btn btn-outline-primary btn-sm mb-3">+ Adicionar Débito</button>
 
-                        <div class="row g-3 mt-2">
-                             <div class="col-md-6">
-                                <label for="valor" class="form-label">Valor (R$):</label>
-                                <input name="valor" id="valor" type="number" step="0.01" min="0.01" class="form-control" required>
-                            </div>
-
-                            <div class="col-md-6">
-                                <label for="historico" class="form-label">Histórico da Transação:</label>
-                                <input name="historico" id="historico" class="form-control" required>
+                        <!-- Linhas de Crédito -->
+                        <h6>Partidas a Crédito</h6>
+                        <div id="credit-entries">
+                            <!-- A primeira linha é fixa -->
+                             <div class="row g-2 mb-2 align-items-center credit-row">
+                                <div class="col-8">
+                                    <select name="conta_credito" class="form-select" required>
+                                        <option value="" disabled selected>Selecione a conta de crédito...</option>
+                                        {% for cod, nome_conta_obj in contas.items() %}{% set nome_exibicao = nome_conta_obj if nome_conta_obj is string else nome_conta_obj.get('nome', 'Desconhecida') %}<option value="{{ cod }}">{{ nome_exibicao }} ({{ cod }})</option>{% endfor %}
+                                    </select>
+                                </div>
+                                <div class="col-4">
+                                    <input type="number" name="valor_credito" class="form-control valor-input" placeholder="Valor (R$)" step="0.01" min="0.01" required>
+                                </div>
                             </div>
                         </div>
-                        
+                        <button type="button" id="add-credit" class="btn btn-outline-danger btn-sm mb-3">+ Adicionar Crédito</button>
+                        <hr>
+
+                        <!-- Totais e Botão de Salvar -->
+                        <div class="d-flex justify-content-between align-items-center fw-bold fs-5 mt-2">
+                            <span>Total Débitos: <span id="total-debit">R$ 0.00</span></span>
+                            <span>Total Créditos: <span id="total-credit">R$ 0.00</span></span>
+                        </div>
+                        <div id="balance-alert" class="alert alert-danger mt-2 d-none" role="alert">
+                            Atenção: O total de débitos deve ser igual ao total de créditos.
+                        </div>
+
                         <div class="d-grid mt-3">
-                             <button type="submit" class="btn btn-success">Registar Transação</button>
+                             <button type="submit" id="submit-lancamento" class="btn btn-success" disabled>Registar Transação</button>
                         </div>
                     </form>
                 </div>
                 <!-- FIM DO FORMULÁRIO -->
+            </div>
 
+            <div class="col-lg-5">
+                <!-- Seus gráficos e botões de navegação -->
                 <div class="d-grid gap-2 mb-3">
                     <a href="{{ url_for('diario') }}" class="btn btn-secondary">📘 Livro Diário</a>
                     <a href="{{ url_for('razao') }}" class="btn btn-secondary">📗 Livro Razão</a>
@@ -89,33 +108,12 @@
                     <a href="{{ url_for('grafico_data') }}" class="btn btn-info">📊 Gráfico por Data</a>
                     <a href="{{ url_for('historico_alteracoes') }}" class="btn btn-light border">📜 Histórico de Alterações</a>
                 </div>
-
                 {% if admin_da_empresa and session.get('usuario') == admin_da_empresa %}
-                    <div class="d-grid">
+                    <div class="d-grid mb-3">
                         <a href="{{ url_for('cadastro') }}" class="btn btn-outline-primary">➕ Registar Novo Utilizador na Empresa</a>
                     </div>
                 {% endif %}
-            </div>
-
-            <div class="col-md-6">
-                <div class="card shadow-sm mb-4"> 
-                    <div class="card-body">
-                        <h5 class="card-title text-center">Resumo Financeiro (Débitos x Créditos)</h5>
-                        {% if total_d is defined and total_c is defined %}
-                            <canvas id="graficoResumoDashboard" height="180"></canvas>
-                            <script id="dashboardChartData" type="application/json">
-                                {
-                                    "total_d": {{ total_d | default(0) | float }},
-                                    "total_c": {{ total_c | default(0) | float }}
-                                }
-                            </script>
-                        {% else %}
-                            <p class="text-center text-muted">Não há dados suficientes para exibir o resumo.</p>
-                        {% endif %}
-                    </div>
-                </div>
-
-                <div class="card shadow-sm">
+                <div class="card shadow-sm mb-4">
                     <div class="card-body">
                         <h5 class="card-title text-center">Distribuição de Despesas por Conta</h5>
                         {% if dados_despesas_pizza and dados_despesas_pizza.labels and dados_despesas_pizza.labels|length > 0 %}
@@ -132,55 +130,110 @@
         </div>
     </div>
 
+    <!-- Template para novas linhas (usado pelo JavaScript) -->
+    <template id="debit-row-template">
+        <div class="row g-2 mb-2 align-items-center debit-row">
+            <div class="col-8">
+                <select name="conta_debito" class="form-select" required>
+                    <option value="" disabled selected>Selecione a conta de débito...</option>
+                    {% for cod, nome_conta_obj in contas.items() %}{% set nome_exibicao = nome_conta_obj if nome_conta_obj is string else nome_conta_obj.get('nome', 'Desconhecida') %}<option value="{{ cod }}">{{ nome_exibicao }} ({{ cod }})</option>{% endfor %}
+                </select>
+            </div>
+            <div class="col-3">
+                <input type="number" name="valor_debito" class="form-control valor-input" placeholder="Valor (R$)" step="0.01" min="0.01" required>
+            </div>
+            <div class="col-1">
+                <button type="button" class="btn btn-danger btn-sm remove-row">X</button>
+            </div>
+        </div>
+    </template>
+    <template id="credit-row-template">
+        <div class="row g-2 mb-2 align-items-center credit-row">
+            <div class="col-8">
+                <select name="conta_credito" class="form-select" required>
+                    <option value="" disabled selected>Selecione a conta de crédito...</option>
+                    {% for cod, nome_conta_obj in contas.items() %}{% set nome_exibicao = nome_conta_obj if nome_conta_obj is string else nome_conta_obj.get('nome', 'Desconhecida') %}<option value="{{ cod }}">{{ nome_exibicao }} ({{ cod }})</option>{% endfor %}
+                </select>
+            </div>
+            <div class="col-3">
+                <input type="number" name="valor_credito" class="form-control valor-input" placeholder="Valor (R$)" step="0.01" min="0.01" required>
+            </div>
+            <div class="col-1">
+                <button type="button" class="btn btn-danger btn-sm remove-row">X</button>
+            </div>
+        </div>
+    </template>
+    
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            // --- Script para Gráfico de Barras do Dashboard (Resumo Financeiro) ---
-            const canvasDashboard = document.getElementById('graficoResumoDashboard');
-            let dashboardChartData = null;
-            let chartInstanceDashboard = null;
+            // Lógica para os gráficos do dashboard aqui (se já a tiver)
+        });
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+    <script>
+        // --- JAVASCRIPT PARA O FORMULÁRIO DINÂMICO ---
+        document.addEventListener('DOMContentLoaded', function() {
+            const form = document.getElementById('form-lancamento');
+            const addDebitBtn = document.getElementById('add-debit');
+            const addCreditBtn = document.getElementById('add-credit');
+            const debitEntries = document.getElementById('debit-entries');
+            const creditEntries = document.getElementById('credit-entries');
+            const debitTemplate = document.getElementById('debit-row-template');
+            const creditTemplate = document.getElementById('credit-row-template');
 
-            try {
-                const jsonDataElement = document.getElementById('dashboardChartData');
-                if (jsonDataElement && jsonDataElement.textContent.trim() !== "") {
-                    dashboardChartData = JSON.parse(jsonDataElement.textContent);
-                }
-            } catch (e) { console.error("Erro ao analisar dados do gráfico de resumo:", e); }
+            const totalDebitEl = document.getElementById('total-debit');
+            const totalCreditEl = document.getElementById('total-credit');
+            const balanceAlert = document.getElementById('balance-alert');
+            const submitBtn = document.getElementById('submit-lancamento');
 
-            if (canvasDashboard && dashboardChartData) {
-                const ctxDashboard = canvasDashboard.getContext('2d');
-                chartInstanceDashboard = new Chart(ctxDashboard, {
-                    type: 'bar',
-                    data: {
-                        labels: ['Débito', 'Crédito'],
-                        datasets: [{
-                            label: 'Total (R$)',
-                            data: [dashboardChartData.total_d, dashboardChartData.total_c],
-                            backgroundColor: ['rgba(220, 53, 69, 0.7)', 'rgba(25, 135, 84, 0.7)'],
-                            borderColor: ['rgba(220, 53, 69, 1)', 'rgba(25, 135, 84, 1)'],
-                            borderWidth: 1
-                        }]
-                    },
-                    options: { 
-                        responsive: true, maintainAspectRatio: true,
-                        plugins: { legend: { display: false }, title: { display: false },
-                            tooltip: {
-                                callbacks: {
-                                    label: function(context) {
-                                        let label = context.dataset.label || '';
-                                        if (label) { label += ': '; }
-                                        if (context.parsed.y !== null) {
-                                            label += new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(context.parsed.y);
-                                        }
-                                        return label;
-                                    }
-                                }
-                            }
-                        },
-                        scales: { y: { beginAtZero: true } }
-                    }
-                });
+            function addEntry(type) {
+                const template = (type === 'debit') ? debitTemplate : creditTemplate;
+                const clone = template.content.cloneNode(true);
+                const container = (type === 'debit') ? debitEntries : creditEntries;
+                container.appendChild(clone);
+                updateTotals();
             }
 
+            addDebitBtn.addEventListener('click', () => addEntry('debit'));
+            addCreditBtn.addEventListener('click', () => addEntry('credit'));
+
+            form.addEventListener('click', function(e) {
+                if (e.target && e.target.classList.contains('remove-row')) {
+                    e.target.closest('.row').remove();
+                    updateTotals();
+                }
+            });
+
+            form.addEventListener('input', function(e) {
+                if(e.target && e.target.classList.contains('valor-input')) {
+                    updateTotals();
+                }
+            });
+
+            function updateTotals() {
+                let totalDebit = 0;
+                let totalCredit = 0;
+                
+                document.querySelectorAll('input[name="valor_debito"]').forEach(input => {
+                    totalDebit += parseFloat(input.value) || 0;
+                });
+                document.querySelectorAll('input[name="valor_credito"]').forEach(input => {
+                    totalCredit += parseFloat(input.value) || 0;
+                });
+
+                totalDebitEl.textContent = `R$ ${totalDebit.toFixed(2)}`;
+                totalCreditEl.textContent = `R$ ${totalCredit.toFixed(2)}`;
+
+                if (totalDebit > 0 && Math.abs(totalDebit - totalCredit) < 0.01) {
+                    balanceAlert.classList.add('d-none');
+                    submitBtn.disabled = false;
+                } else {
+                    balanceAlert.classList.remove('d-none');
+                    submitBtn.disabled = true;
+                }
+            }
+            
             // --- Script para Gráfico de Pizza (Despesas) ---
             const canvasDespesasPizza = document.getElementById('graficoDespesasPizza');
             let despesasPizzaData = null;
@@ -199,8 +252,9 @@
                     'rgba(255, 99, 132, 0.7)', 'rgba(54, 162, 235, 0.7)',
                     'rgba(255, 206, 86, 0.7)', 'rgba(75, 192, 192, 0.7)',
                     'rgba(153, 102, 255, 0.7)', 'rgba(255, 159, 64, 0.7)',
-                    'rgba(201, 203, 207, 0.7)', 'rgba(100, 150, 200, 0.7)'
+                    'rgba(201, 203, 207, 0.7)', 'rgba(100, 150, 200, 0.7)' 
                 ];
+                let corTextoLegendaPizza = document.body.classList.contains('dark-mode') ? '#e0e0e0' : '#333';
                 chartInstanceDespesasPizza = new Chart(ctxPizza, {
                     type: 'doughnut',
                     data: {
@@ -216,7 +270,7 @@
                         responsive: true, maintainAspectRatio: true,
                         plugins: {
                             title: { display: false },
-                            legend: { position: 'bottom', labels: { padding: 15, font: { size: 12 } } },
+                            legend: { position: 'bottom', labels: { color: corTextoLegendaPizza, padding: 15, font: { size: 12 } } },
                             tooltip: {
                                 callbacks: {
                                     label: function(context) {
@@ -234,20 +288,6 @@
                 });
             }
 
-            // --- Funções para atualizar cores dos gráficos ---
-            window.updateChartColorsForDashboard = function(isDarkMode) {
-                if (chartInstanceDashboard) {
-                    const newTextColor = isDarkMode ? 'rgba(224, 224, 224, 0.87)' : 'rgba(0, 0, 0, 0.87)';
-                    const newGridColor = isDarkMode ? 'rgba(224, 224, 224, 0.1)' : 'rgba(0, 0, 0, 0.1)';
-                    const scales = chartInstanceDashboard.options.scales;
-                    if (scales) {
-                        if (scales.x && scales.x.ticks) scales.x.ticks.color = newTextColor;
-                        if (scales.y && scales.y.ticks) scales.y.ticks.color = newTextColor;
-                        if (scales.y && scales.y.grid) scales.y.grid.color = newGridColor;
-                    }
-                    chartInstanceDashboard.update();
-                }
-            };
             window.updateChartColorsForPieDashboard = function(isDarkMode) {
                 if (chartInstanceDespesasPizza) {
                     const newLegendColor = isDarkMode ? '#e0e0e0' : '#333';
@@ -258,17 +298,11 @@
                 }
             };
             
-            // Chama as funções de atualização no carregamento inicial
-            const isDarkModeInitial = document.body.classList.contains('dark-mode');
-            if (typeof window.updateChartColorsForDashboard === 'function') {
-                window.updateChartColorsForDashboard(isDarkModeInitial);
-            }
+            // Chama a função de atualização no carregamento inicial
             if (typeof window.updateChartColorsForPieDashboard === 'function') {
-                window.updateChartColorsForPieDashboard(isDarkModeInitial);
+                window.updateChartColorsForPieDashboard(document.body.classList.contains('dark-mode'));
             }
         });
     </script>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="{{ url_for('static', filename='script.js') }}"></script>
 </body>
 </html>

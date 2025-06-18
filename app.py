@@ -128,8 +128,19 @@ def _cabecalho_relatorio_pdf(story, styles, nome_empresa, titulo_relatorio):
     story.append(Paragraph(f"Emitido em: {datetime.now().strftime('%d/%m/%Y %H:%M:%S')} por: {session.get('usuario', 'N/A')}", style_info_geral))
     story.append(Spacer(1, 0.8*cm))
 
-# --- ROTAS DA APLICAÇÃO ---
+def preparar_dados_despesas_pizza(lancamentos):
+    despesas_por_conta = {}
+    for lanc in lancamentos:
+        if lanc.get('tipo') == 'D':
+            try:
+                valor = float(lanc.get('valor', 0))
+                nome_conta = lanc.get('conta_nome', 'Desconhecida') 
+                despesas_por_conta[nome_conta] = despesas_por_conta.get(nome_conta, 0) + valor
+            except ValueError:
+                continue
+    return {'labels': list(despesas_por_conta.keys()), 'data': list(despesas_por_conta.values())}
 
+# --- ROTAS DA APLICAÇÃO ---
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
@@ -203,53 +214,62 @@ def dashboard():
     admin_da_empresa_atual = empresas.get(id_empresa_atual, {}).get('admin_user')
 
     if request.method == 'POST':
-        conta_debito_cod = request.form.get('conta_debito')
-        conta_credito_cod = request.form.get('conta_credito')
-        valor_str = request.form.get('valor')
         historico = request.form.get('historico', '').strip()
+        contas_debito = request.form.getlist('conta_debito')
+        valores_debito = request.form.getlist('valor_debito')
+        contas_credito = request.form.getlist('conta_credito')
+        valores_credito = request.form.getlist('valor_credito')
         
-        if not all([conta_debito_cod, conta_credito_cod, valor_str, historico]):
-            flash('Todos os campos da transação são obrigatórios.', 'warning')
-        elif conta_debito_cod == conta_credito_cod:
-            flash('A conta de débito e a conta de crédito não podem ser a mesma.', 'warning')
+        if not historico or not contas_debito or not contas_credito:
+            flash('Histórico e pelo menos uma partida de débito e crédito são obrigatórios.', 'warning')
         else:
             try:
-                valor = float(valor_str)
-                if valor <= 0:
-                    flash('O valor da transação deve ser positivo.', 'warning')
+                total_debito = sum(float(v) for v in valores_debito if v)
+                total_credito = sum(float(c) for c in valores_credito if c)
+                
+                if total_debito <= 0 or total_credito <= 0:
+                     flash('Os valores totais de débito e crédito devem ser positivos.', 'warning')
+                elif abs(total_debito - total_credito) > 0.01:
+                    flash('O total de débitos deve ser igual ao total de créditos.', 'danger')
                 else:
                     data_atual = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
                     transacao_id = str(uuid.uuid4())
+                    novos_lancamentos = []
                     
-                    conta_debito_obj = contas.get(conta_debito_cod, {})
-                    nome_conta_debito = conta_debito_obj.get('nome', 'Conta Desconhecida') if isinstance(conta_debito_obj, dict) else conta_debito_obj
-                    conta_credito_obj = contas.get(conta_credito_cod, {})
-                    nome_conta_credito = conta_credito_obj.get('nome', 'Conta Desconhecida') if isinstance(conta_credito_obj, dict) else conta_credito_obj
-
-                    lancamento_debito = {
-                        'id': str(uuid.uuid4()), 'transacao_id': transacao_id, 'data': data_atual,
-                        'conta_cod': conta_debito_cod, 'conta_nome': nome_conta_debito,
-                        'tipo': 'D', 'valor': valor, 'historico': historico, 'usuario': session.get('usuario')
-                    }
-                    lancamento_credito = {
-                        'id': str(uuid.uuid4()), 'transacao_id': transacao_id, 'data': data_atual,
-                        'conta_cod': conta_credito_cod, 'conta_nome': nome_conta_credito,
-                        'tipo': 'C', 'valor': valor, 'historico': historico, 'usuario': session.get('usuario')
-                    }
-
-                    lancamentos.append(lancamento_debito)
-                    lancamentos.append(lancamento_credito)
+                    for conta_cod, valor_str in zip(contas_debito, valores_debito):
+                        if conta_cod and valor_str:
+                            conta_obj = contas.get(conta_cod, {})
+                            nome_conta = conta_obj.get('nome', 'Conta Desconhecida') if isinstance(conta_obj, dict) else conta_obj
+                            novos_lancamentos.append({
+                                'id': str(uuid.uuid4()), 'transacao_id': transacao_id, 'data': data_atual,
+                                'conta_cod': conta_cod, 'conta_nome': nome_conta,
+                                'tipo': 'D', 'valor': float(valor_str), 'historico': historico, 'usuario': session.get('usuario')
+                            })
+                    
+                    for conta_cod, valor_str in zip(contas_credito, valores_credito):
+                        if conta_cod and valor_str:
+                            conta_obj = contas.get(conta_cod, {})
+                            nome_conta = conta_obj.get('nome', 'Conta Desconhecida') if isinstance(conta_obj, dict) else conta_obj
+                            novos_lancamentos.append({
+                                'id': str(uuid.uuid4()), 'transacao_id': transacao_id, 'data': data_atual,
+                                'conta_cod': conta_cod, 'conta_nome': nome_conta,
+                                'tipo': 'C', 'valor': float(valor_str), 'historico': historico, 'usuario': session.get('usuario')
+                            })
+                    
+                    lancamentos.extend(novos_lancamentos)
                     salvar_lancamentos_empresa(id_empresa_atual, lancamentos)
                     
-                    registrar_no_historico(id_empresa=id_empresa_atual, usuario=session.get('usuario'), 
-                                           acao='CRIACAO_TRANSACAO', lancamento_id=transacao_id, 
-                                           dados_novos={"debito": lancamento_debito, "credito": lancamento_credito})
+                    registrar_no_historico(
+                        id_empresa=id_empresa_atual, usuario=session.get('usuario'), 
+                        acao='CRIACAO_TRANSACAO_MULTIPLA', lancamento_id=transacao_id, 
+                        dados_novos={"historico": historico, "lancamentos": novos_lancamentos}
+                    )
                     
                     flash('Transação registrada com sucesso!', 'success')
                     return redirect(url_for('dashboard'))
 
             except ValueError:
-                flash('Valor inválido inserido.', 'danger')
+                flash('Um ou mais valores inseridos são inválidos.', 'danger')
         
     total_d = sum(float(l.get('valor', 0)) for l in lancamentos if l.get('tipo') == 'D')
     total_c = sum(float(l.get('valor', 0)) for l in lancamentos if l.get('tipo') == 'C')
@@ -258,18 +278,6 @@ def dashboard():
                            usuario=session.get('usuario'), nome_empresa=session.get('nome_empresa'), 
                            contas=contas, total_d=total_d, total_c=total_c,
                            admin_da_empresa=admin_da_empresa_atual, dados_despesas_pizza=dados_despesas_pizza)
-
-def preparar_dados_despesas_pizza(lancamentos):
-    despesas_por_conta = {}
-    for lanc in lancamentos:
-        if lanc.get('tipo') == 'D':
-            try:
-                valor = float(lanc.get('valor', 0))
-                nome_conta = lanc.get('conta_nome', 'Desconhecida') 
-                despesas_por_conta[nome_conta] = despesas_por_conta.get(nome_conta, 0) + valor
-            except ValueError:
-                continue
-    return {'labels': list(despesas_por_conta.keys()), 'data': list(despesas_por_conta.values())}
 
 @app.route('/cadastro', methods=['GET', 'POST'])
 def cadastro():
@@ -305,7 +313,6 @@ def diario():
     lancamentos_ordenados = sorted(lancamentos, key=lambda x: datetime.strptime(x.get('data', '1900-01-01 00:00:00'), '%Y-%m-%d %H:%M:%S'))
     return render_template('diario.html', lancamentos=lancamentos_ordenados, usuario=session.get('usuario'), nome_empresa=session.get('nome_empresa'))
 
-# --- ROTAS DE EDIÇÃO/EXCLUSÃO CORRIGIDAS (USANDO ID) ---
 @app.route('/diario/editar/<lancamento_id>', methods=['GET', 'POST'])
 def editar_lancamento(lancamento_id):
     if not verificar_sessao_empresa(): return redirect(url_for('login'))
@@ -334,7 +341,11 @@ def editar_lancamento(lancamento_id):
                 novo_valor = float(novo_valor_str)
                 if novo_valor <= 0: flash('O valor do lançamento deve ser positivo.', 'warning')
                 else:
-                    lancamento_idx = next(i for i, l in enumerate(lancamentos) if str(l.get('id')) == str(lancamento_id))
+                    lancamento_idx = next((i for i, l in enumerate(lancamentos) if str(l.get('id')) == str(lancamento_id)), None)
+                    if lancamento_idx is None:
+                        flash('Erro ao encontrar lançamento para atualizar.', 'danger')
+                        return redirect(url_for('diario'))
+
                     data_lanc_original_dt = datetime.strptime(lancamento_original['data'], '%Y-%m-%d %H:%M:%S')
                     nova_data_dt = datetime.strptime(nova_data_str, '%Y-%m-%d')
                     data_final_para_salvar = data_lanc_original_dt.replace(year=nova_data_dt.year, month=nova_data_dt.month, day=nova_data_dt.day).strftime('%Y-%m-%d %H:%M:%S')
@@ -380,7 +391,6 @@ def excluir_lancamento(lancamento_id):
         flash('Erro ao excluir: Lançamento não encontrado.', 'danger')
     return redirect(url_for('diario'))
 
-# --- ROTA DE HISTÓRICO ---
 @app.route('/historico')
 def historico_alteracoes():
     if not verificar_sessao_empresa():
@@ -634,7 +644,7 @@ def balancete():
     total_saldo_credor_geral = 0.0
     for cod, dados_conta in saldos_contas_dict.items():
         saldo_calculado = dados_conta['debito'] - dados_conta['credito']
-        natureza_conta = dados_conta.get('natureza', 'D') 
+        natureza_conta = dados_conta.get('natureza', 'D')
         dados_conta['saldo_devedor'] = 0.0
         dados_conta['saldo_credor'] = 0.0
         if natureza_conta == 'D':
@@ -645,10 +655,7 @@ def balancete():
             else: dados_conta['saldo_devedor'] = saldo_calculado
         total_saldo_devedor_geral += dados_conta['saldo_devedor']
         total_saldo_credor_geral += dados_conta['saldo_credor']
-    return render_template('balancete.html', saldos_contas=saldos_contas_dict, 
-                           total_debitos=total_saldo_devedor_geral, 
-                           total_creditos=total_saldo_credor_geral, 
-                           usuario=session.get('usuario'), nome_empresa=session.get('nome_empresa'))
+    return render_template('balancete.html', saldos_contas=saldos_contas_dict, total_debitos=total_saldo_devedor_geral, total_creditos=total_saldo_credor_geral, usuario=session.get('usuario'), nome_empresa=session.get('nome_empresa'))
 
 @app.route('/balancete/exportar_pdf')
 def balancete_exportar_pdf():
@@ -698,14 +705,13 @@ def balancete_exportar_pdf():
 
     style_texto_tabela_normal = ParagraphStyle('TextoTabelaNormal', parent=styles['Normal'], fontSize=8, leading=10)
     style_texto_tabela_direita = ParagraphStyle('TextoTabelaDireita', parent=styles['Normal'], fontSize=8, alignment=TA_RIGHT, leading=10)
-
+    
     dados_tabela_pdf_balancete = [[
         Paragraph("<b>Conta (Cód.)</b>", style_texto_tabela_normal), 
         Paragraph("<b>Saldo Devedor (R$)</b>", style_texto_tabela_direita),
         Paragraph("<b>Saldo Credor (R$)</b>", style_texto_tabela_direita)
     ]]
-    total_geral_sd_pdf = 0.0 
-    total_geral_sc_pdf = 0.0
+    
     for dados_conta_item_pdf in contas_para_pdf:
         sd = dados_conta_item_pdf['saldo_devedor']
         sc = dados_conta_item_pdf['saldo_credor']
@@ -715,13 +721,12 @@ def balancete_exportar_pdf():
                 Paragraph(f"{sd:.2f}" if sd > 0 else "0.00", style_texto_tabela_direita),
                 Paragraph(f"{sc:.2f}" if sc > 0 else "0.00", style_texto_tabela_direita)
             ])
-            total_geral_sd_pdf += sd
-            total_geral_sc_pdf += sc
+            
     if len(contas_para_pdf) > 0:
         dados_tabela_pdf_balancete.append([
             Paragraph("<b>TOTAIS GERAIS</b>", style_texto_tabela_normal), 
-            Paragraph(f"<b>{total_geral_sd_pdf:.2f}</b>", style_texto_tabela_direita),
-            Paragraph(f"<b>{total_geral_sc_pdf:.2f}</b>", style_texto_tabela_direita)
+            Paragraph(f"<b>{total_saldo_devedor_geral_pdf:.2f}</b>", style_texto_tabela_direita),
+            Paragraph(f"<b>{total_saldo_credor_geral_pdf:.2f}</b>", style_texto_tabela_direita)
         ])
         col_widths_balancete = [10*cm, 4*cm, 4*cm] 
         tabela = Table(dados_tabela_pdf_balancete, colWidths=col_widths_balancete, repeatRows=1)
