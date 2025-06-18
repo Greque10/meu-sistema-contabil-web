@@ -81,11 +81,31 @@ def carregar_contas_empresa(id_empresa):
     contas = carregar_dados_empresa(id_empresa, NOME_ARQUIVO_CONTAS)
     if not contas:
         plano_de_contas_inicial = {
-            "10101": {"nome": "Caixa Geral", "natureza": "D"}, "10102": {"nome": "Bancos Conta Movimento", "natureza": "D"},
-            "20101": {"nome": "Fornecedores Nacionais", "natureza": "C"}, "20102": {"nome": "Salários a Pagar", "natureza": "C"},
-            "30101": {"nome": "Receita Bruta de Vendas", "natureza": "C"}, "30102": {"nome": "Receita de Serviços", "natureza": "C"},
-            "40101": {"nome": "Custo das Mercadorias Vendidas (CMV)", "natureza": "D"},
-            "40102": {"nome": "Despesas com Aluguel", "natureza": "D"}, "40103": {"nome": "Despesas com Salários", "natureza": "D"}
+            "10101": {"nome": "Caixa Geral", "natureza": "D"},
+            "10102": {"nome": "Bancos Conta Movimento", "natureza": "D"},
+            "10201": {"nome": "Clientes", "natureza": "D"},
+            "10301": {"nome": "Estoques", "natureza": "D"},
+            "10401": {"nome": "Adiantamento a Fornecedores", "natureza": "D"},
+            "12101": {"nome": "Terrenos", "natureza": "D"},
+            "12102": {"nome": "Edificações", "natureza": "D"},
+            "12103": {"nome": "Móveis e Utensílios", "natureza": "D"},
+            "12109": {"nome": "Depreciação Acumulada", "natureza": "C"},
+            "20101": {"nome": "Fornecedores Nacionais", "natureza": "C"},
+            "20102": {"nome": "Salários a Pagar", "natureza": "C"},
+            "20103": {"nome": "Tributos a Pagar", "natureza": "C"},
+            "20201": {"nome": "Adiantamento de Clientes", "natureza": "C"},
+            "20301": {"nome": "Dividendos a Pagar", "natureza": "C"},
+            "23101": {"nome": "Capital Social", "natureza": "C"},
+            "23201": {"nome": "Lucros Acumulados", "natureza": "C"},
+            "23202": {"nome": "Reserva Legal", "natureza": "C"},
+            "23203": {"nome": "Reserva de Contingências", "natureza": "C"},
+            "23204": {"nome": "Reserva de Lucros", "natureza": "C"},
+            "30101": {"nome": "Receita de Vendas", "natureza": "C"},
+            "40101": {"nome": "Custo da Mercadoria Vendida (CMV)", "natureza": "D"},
+            "40102": {"nome": "Despesas com Salários", "natureza": "D"},
+            "40103": {"nome": "Despesa com Depreciação", "natureza": "D"},
+            "40104": {"nome": "Despesa com Tributos sobre o Lucro", "natureza": "D"},
+            "50101": {"nome": "Apuração do Resultado do Exercício (ARE)", "natureza": "T"}
         }
         salvar_dados_empresa(id_empresa, plano_de_contas_inicial, NOME_ARQUIVO_CONTAS)
         return plano_de_contas_inicial
@@ -97,12 +117,12 @@ def carregar_historico_empresa(id_empresa):
 def salvar_historico_empresa(id_empresa, historico):
     salvar_dados_empresa(id_empresa, historico, NOME_ARQUIVO_HISTORICO)
 
-def registrar_no_historico(id_empresa, usuario, acao, lancamento_id, dados_anteriores=None, dados_novos=None):
+def registrar_no_historico(id_empresa, usuario, acao, transacao_id, detalhes_acao=None):
     historico = carregar_historico_empresa(id_empresa)
     entrada_log = {
         "log_id": len(historico) + 1, "timestamp": datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
-        "usuario": usuario, "acao": acao, "lancamento_id": lancamento_id,
-        "dados_anteriores": dados_anteriores, "dados_novos": dados_novos
+        "usuario": usuario, "acao": acao, "transacao_id": transacao_id,
+        "detalhes": detalhes_acao
     }
     historico.append(entrada_log)
     salvar_historico_empresa(id_empresa, historico)
@@ -141,6 +161,7 @@ def preparar_dados_despesas_pizza(lancamentos):
     return {'labels': list(despesas_por_conta.keys()), 'data': list(despesas_por_conta.values())}
 
 # --- ROTAS DA APLICAÇÃO ---
+
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
@@ -261,8 +282,8 @@ def dashboard():
                     
                     registrar_no_historico(
                         id_empresa=id_empresa_atual, usuario=session.get('usuario'), 
-                        acao='CRIACAO_TRANSACAO_MULTIPLA', lancamento_id=transacao_id, 
-                        dados_novos={"historico": historico, "lancamentos": novos_lancamentos}
+                        acao='CRIACAO_TRANSACAO_MULTIPLA', transacao_id=transacao_id, 
+                        detalhes_acao={"historico": historico, "lancamentos": novos_lancamentos}
                     )
                     
                     flash('Transação registrada com sucesso!', 'success')
@@ -304,6 +325,7 @@ def cadastro():
                 flash(f'Utilizador "{novo_usuario_form}" registado com sucesso para a empresa!', 'success')
     return render_template('cadastro.html', usuario=usuario_logado_admin, nome_empresa=session.get('nome_empresa'))
 
+# --- ROTAS DE DIÁRIO CORRIGIDAS (USANDO ID) ---
 @app.route('/diario')
 def diario():
     if not verificar_sessao_empresa():
@@ -360,7 +382,7 @@ def editar_lancamento(lancamento_id):
                     lancamentos[lancamento_idx]['historico'] = novo_historico
                     salvar_lancamentos_empresa(id_empresa_atual, lancamentos)
                     
-                    registrar_no_historico(id_empresa=id_empresa_atual, usuario=session.get('usuario'), acao='EDICAO', lancamento_id=lancamento_id, dados_anteriores=lancamento_original, dados_novos=lancamentos[lancamento_idx])
+                    registrar_no_historico(id_empresa=id_empresa_atual, usuario=session.get('usuario'), acao='EDICAO_PARTIDA', transacao_id=lancamento_original.get('transacao_id'), detalhes_acao={"dados_anteriores": lancamento_original, "dados_novos": lancamentos[lancamento_idx]})
                     flash('Lançamento atualizado com sucesso!', 'success')
                     return redirect(url_for('diario'))
             except ValueError: flash('Valor ou formato de data inválido.', 'danger')
@@ -371,24 +393,23 @@ def editar_lancamento(lancamento_id):
     data_para_input = datetime.strptime(lancamento_original['data'], '%Y-%m-%d %H:%M:%S').strftime('%Y-%m-%d')
     return render_template('editar_lancamento.html', lancamento=lancamento_original, lancamento_original_data_str=data_para_input, contas=contas, usuario=session.get('usuario'), nome_empresa=session.get('nome_empresa'))
 
-@app.route('/diario/excluir/<lancamento_id>', methods=['POST'])
-def excluir_lancamento(lancamento_id):
+@app.route('/diario/excluir/<transacao_id>', methods=['POST'])
+def excluir_lancamento(transacao_id):
     if not verificar_sessao_empresa():
         return redirect(url_for('login'))
     id_empresa_atual = session['id_empresa']
     lancamentos = carregar_lancamentos_empresa(id_empresa_atual)
     
-    lancamento_para_excluir = None
-    for i, l in enumerate(lancamentos):
-        if str(l.get('id')) == str(lancamento_id):
-            lancamento_para_excluir = lancamentos.pop(i)
-            break
-    if lancamento_para_excluir:
-        salvar_lancamentos_empresa(id_empresa_atual, lancamentos)
-        registrar_no_historico(id_empresa=id_empresa_atual, usuario=session.get('usuario'), acao='EXCLUSAO', lancamento_id=lancamento_id, dados_anteriores=lancamento_para_excluir)
-        flash('Lançamento excluído com sucesso!', 'success')
+    # Exclui todas as partidas (débitos e créditos) associadas à mesma transacao_id
+    lancamentos_a_manter = [l for l in lancamentos if str(l.get('transacao_id')) != str(transacao_id)]
+    lancamentos_excluidos = [l for l in lancamentos if str(l.get('transacao_id')) == str(transacao_id)]
+
+    if len(lancamentos_a_manter) < len(lancamentos):
+        salvar_lancamentos_empresa(id_empresa_atual, lancamentos_a_manter)
+        registrar_no_historico(id_empresa=id_empresa_atual, usuario=session.get('usuario'), acao='EXCLUSAO_TRANSACAO', transacao_id=transacao_id, detalhes_acao={"lancamentos_excluidos": lancamentos_excluidos})
+        flash('Transação completa excluída com sucesso!', 'success')
     else:
-        flash('Erro ao excluir: Lançamento não encontrado.', 'danger')
+        flash('Erro ao excluir: Transação não encontrada.', 'danger')
     return redirect(url_for('diario'))
 
 @app.route('/historico')
@@ -525,6 +546,7 @@ def razao_exportar_pdf():
         return redirect(url_for('login'))
     id_empresa_atual = session['id_empresa']
     nome_empresa_atual = session.get('nome_empresa', 'Empresa Desconhecida')
+    
     lancamentos = carregar_lancamentos_empresa(id_empresa_atual)
     contas = carregar_contas_empresa(id_empresa_atual)
     razao_por_conta_dados = {} 
@@ -566,6 +588,7 @@ def razao_exportar_pdf():
             continue
         alguma_conta_com_lancamento = True
         story.append(Paragraph(f"Conta: {dados_conta_pdf['nome']} ({conta_cod_pdf})", style_conta_titulo))
+        
         dados_tabela_conta = [[
             Paragraph("<b>Data</b>", style_texto_tabela_normal), 
             Paragraph("<b>Histórico</b>", style_texto_tabela_normal), 
@@ -573,17 +596,19 @@ def razao_exportar_pdf():
             Paragraph("<b>Crédito (R$)</b>", style_texto_tabela_direita),
             Paragraph("<b>Saldo (R$)</b>", style_texto_tabela_direita)
         ]]
+        
         saldo_corrente_pdf = 0.0
         for lanc_pdf in dados_conta_pdf['lancamentos']: 
             valor_lanc_pdf = float(lanc_pdf.get('valor', 0.0))
             debito_str = f"{valor_lanc_pdf:.2f}" if lanc_pdf.get('tipo') == 'D' else ''
             credito_str = f"{valor_lanc_pdf:.2f}" if lanc_pdf.get('tipo') == 'C' else ''
-            if lanc_pdf.get('tipo') == 'D':
-                saldo_corrente_pdf += valor_lanc_pdf
-            elif lanc_pdf.get('tipo') == 'C':
-                saldo_corrente_pdf -= valor_lanc_pdf 
+            
+            if lanc_pdf.get('tipo') == 'D': saldo_corrente_pdf += valor_lanc_pdf
+            elif lanc_pdf.get('tipo') == 'C': saldo_corrente_pdf -= valor_lanc_pdf 
+            
             data_formatada = datetime.strptime(lanc_pdf.get('data', '1900-01-01 00:00:00').split(' ')[0], '%Y-%m-%d').strftime('%d/%m/%Y')
             historico_paragrafo = Paragraph(lanc_pdf.get('historico', ''), style_texto_tabela_historico)
+            
             dados_tabela_conta.append([
                 Paragraph(data_formatada, style_texto_tabela_normal),
                 historico_paragrafo,
@@ -591,6 +616,7 @@ def razao_exportar_pdf():
                 Paragraph(credito_str, style_texto_tabela_direita),
                 Paragraph(f"{saldo_corrente_pdf:.2f}", style_texto_tabela_direita)
             ])
+        
         col_widths_razao = [1.8*cm, 7.2*cm, 2.5*cm, 2.5*cm, 2.5*cm]
         tabela_conta = Table(dados_tabela_conta, colWidths=col_widths_razao, repeatRows=1)
         estilo_tabela_conta = TableStyle([
@@ -604,6 +630,7 @@ def razao_exportar_pdf():
             if i % 2 == 0: estilo_tabela_conta.add('BACKGROUND', (0,i), (-1,i), colors.HexColor("#DCE6F1"))
         tabela_conta.setStyle(estilo_tabela_conta)
         story.append(tabela_conta)
+        
         saldo_final_conta_val = dados_conta_pdf['saldo_final']
         natureza_conta_atual = contas.get(conta_cod_pdf, {}).get('natureza', 'D') 
         if natureza_conta_atual == 'D':
@@ -614,6 +641,7 @@ def razao_exportar_pdf():
         story.append(PageBreak()) 
     if not alguma_conta_com_lancamento:
         story.append(Paragraph("Nenhum lançamento encontrado para as contas neste período.", styles['Normal']))
+
     doc.build(story, onFirstPage=_rodape_pdf_simples, onLaterPages=_rodape_pdf_simples)
     buffer.seek(0)
     response = make_response(buffer.getvalue())
@@ -677,9 +705,10 @@ def balancete_exportar_pdf():
             except ValueError: valor = 0.0
             if lanc.get('tipo') == 'D': saldos_contas_dict[cod_conta]['debito'] += valor
             elif lanc.get('tipo') == 'C': saldos_contas_dict[cod_conta]['credito'] += valor
-    total_saldo_devedor_geral_pdf = 0.0
-    total_saldo_credor_geral_pdf = 0.0
+    
     contas_para_pdf = []
+    total_geral_sd_pdf = 0.0 
+    total_geral_sc_pdf = 0.0
     for cod_conta_ordenada in sorted(saldos_contas_dict.keys()):
         dados_conta = saldos_contas_dict[cod_conta_ordenada]
         saldo_calculado = dados_conta['debito'] - dados_conta['credito']
@@ -692,10 +721,11 @@ def balancete_exportar_pdf():
         elif natureza_conta == 'C':
             if saldo_calculado <= 0: dados_conta['saldo_credor'] = abs(saldo_calculado)
             else: dados_conta['saldo_devedor'] = saldo_calculado
-        total_saldo_devedor_geral_pdf += dados_conta['saldo_devedor']
-        total_saldo_credor_geral_pdf += dados_conta['saldo_credor']
-        if dados_conta['debito'] != 0 or dados_conta['credito'] != 0 or dados_conta['saldo_devedor'] != 0 or dados_conta['saldo_credor'] != 0:
+        
+        if dados_conta['saldo_devedor'] > 0 or dados_conta['saldo_credor'] > 0:
             contas_para_pdf.append({'codigo': cod_conta_ordenada, **dados_conta})
+            total_geral_sd_pdf += dados_conta['saldo_devedor']
+            total_geral_sc_pdf += dados_conta['saldo_credor']
 
     buffer = io.BytesIO()
     doc = SimpleDocTemplate(buffer, pagesize=A4, rightMargin=1.5*cm, leftMargin=1.5*cm, topMargin=1.8*cm, bottomMargin=1.8*cm)
@@ -703,8 +733,8 @@ def balancete_exportar_pdf():
     styles = getSampleStyleSheet()
     _cabecalho_relatorio_pdf(story, styles, nome_empresa_atual, "Balancete de Verificação")
 
-    style_texto_tabela_normal = ParagraphStyle('TextoTabelaNormal', parent=styles['Normal'], fontSize=8, leading=10)
-    style_texto_tabela_direita = ParagraphStyle('TextoTabelaDireita', parent=styles['Normal'], fontSize=8, alignment=TA_RIGHT, leading=10)
+    style_texto_tabela_normal = ParagraphStyle('TextoTabelaNormal', parent=styles['Normal'], fontSize=9, leading=11)
+    style_texto_tabela_direita = ParagraphStyle('TextoTabelaDireita', parent=styles['Normal'], fontSize=9, alignment=TA_RIGHT, leading=11)
     
     dados_tabela_pdf_balancete = [[
         Paragraph("<b>Conta (Cód.)</b>", style_texto_tabela_normal), 
@@ -713,36 +743,30 @@ def balancete_exportar_pdf():
     ]]
     
     for dados_conta_item_pdf in contas_para_pdf:
-        sd = dados_conta_item_pdf['saldo_devedor']
-        sc = dados_conta_item_pdf['saldo_credor']
-        if sd > 0 or sc > 0 :
-            dados_tabela_pdf_balancete.append([
-                Paragraph(f"{dados_conta_item_pdf['nome']} ({dados_conta_item_pdf['codigo']})", style_texto_tabela_normal),
-                Paragraph(f"{sd:.2f}" if sd > 0 else "0.00", style_texto_tabela_direita),
-                Paragraph(f"{sc:.2f}" if sc > 0 else "0.00", style_texto_tabela_direita)
-            ])
+        dados_tabela_pdf_balancete.append([
+            Paragraph(f"{dados_conta_item_pdf['nome']} ({dados_conta_item_pdf['codigo']})", style_texto_tabela_normal),
+            Paragraph(f"{dados_conta_item_pdf['saldo_devedor']:.2f}" if dados_conta_item_pdf['saldo_devedor'] > 0 else "0.00", style_texto_tabela_direita),
+            Paragraph(f"{dados_conta_item_pdf['saldo_credor']:.2f}" if dados_conta_item_pdf['saldo_credor'] > 0 else "0.00", style_texto_tabela_direita)
+        ])
             
     if len(contas_para_pdf) > 0:
         dados_tabela_pdf_balancete.append([
             Paragraph("<b>TOTAIS GERAIS</b>", style_texto_tabela_normal), 
-            Paragraph(f"<b>{total_saldo_devedor_geral_pdf:.2f}</b>", style_texto_tabela_direita),
-            Paragraph(f"<b>{total_saldo_credor_geral_pdf:.2f}</b>", style_texto_tabela_direita)
+            Paragraph(f"<b>{total_geral_sd_pdf:.2f}</b>", style_texto_tabela_direita),
+            Paragraph(f"<b>{total_geral_sc_pdf:.2f}</b>", style_texto_tabela_direita)
         ])
         col_widths_balancete = [10*cm, 4*cm, 4*cm] 
         tabela = Table(dados_tabela_pdf_balancete, colWidths=col_widths_balancete, repeatRows=1)
         estilo_tabela = TableStyle([
             ('BACKGROUND', (0,0), (-1,0), colors.HexColor("#333A40")), 
             ('TEXTCOLOR', (0,0), (-1,0), colors.whitesmoke),
-            ('ALIGN', (0,0), (0,-1), 'LEFT'), 
-            ('ALIGN', (1,0), (2,-1), 'RIGHT'), 
+            ('ALIGN', (0,0), (0,-1), 'LEFT'), ('ALIGN', (1,0), (2,-1), 'RIGHT'), 
             ('FONTNAME', (0,0), (-1,0), 'Helvetica-Bold'),
-            ('FONTNAME', (0,1), (-1,-1), 'Helvetica'),
-            ('FONTSIZE', (0,0), (-1,-1), 8),
-            ('BOTTOMPADDING', (0,0), (-1,0), 8),
             ('GRID', (0,0), (-1,-1), 0.5, colors.darkgrey),
             ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
             ('BACKGROUND', (0,-1), (-1,-1), colors.lightgrey), 
             ('FONTNAME', (0,-1), (-1,-1), 'Helvetica-Bold'),
+            ('BOTTOMPADDING', (0,0), (-1,0), 8),
         ])
         for i in range(1, len(dados_tabela_pdf_balancete) -1): 
             if i % 2 == 0: estilo_tabela.add('BACKGROUND', (0,i), (-1,i), colors.HexColor("#EFEFEF"))
@@ -783,8 +807,7 @@ def grafico_data():
                                 data_lanc_obj = datetime.strptime(data_lanc_str_completa, '%Y-%m-%d %H:%M:%S').date()
                                 if data_inicio_obj <= data_lanc_obj <= data_fim_obj:
                                     lancamentos_filtrados_periodo.append(lanc)
-                            except ValueError:
-                                continue
+                            except ValueError: continue
                     dados_por_dia = {}
                     lancamentos_filtrados_periodo.sort(key=lambda x: datetime.strptime(x.get('data', '1900-01-01 00:00:00'), '%Y-%m-%d %H:%M:%S').date())
                     current_date_iter = data_inicio_obj
@@ -797,13 +820,10 @@ def grafico_data():
                         valor_lanc = 0.0
                         try:
                             valor_lanc = float(lanc.get('valor', 0))
-                        except ValueError:
-                            pass
+                        except ValueError: pass
                         if dia_str_chave in dados_por_dia:
-                            if lanc.get('tipo') == 'D':
-                                dados_por_dia[dia_str_chave]['debitos'] += valor_lanc
-                            elif lanc.get('tipo') == 'C':
-                                dados_por_dia[dia_str_chave]['creditos'] += valor_lanc
+                            if lanc.get('tipo') == 'D': dados_por_dia[dia_str_chave]['debitos'] += valor_lanc
+                            elif lanc.get('tipo') == 'C': dados_por_dia[dia_str_chave]['creditos'] += valor_lanc
                     saldo_acumulado_grafico = 0.0
                     dias_ordenados_grafico = sorted(dados_por_dia.keys())
                     for dia_str_grafico in dias_ordenados_grafico:

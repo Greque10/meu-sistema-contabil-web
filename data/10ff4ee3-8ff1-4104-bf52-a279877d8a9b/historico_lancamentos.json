@@ -68,5 +68,40 @@
             "usuario": "Jorge"
         },
         "dados_novos": null
+    },
+    {
+        "log_id": 4,
+        "timestamp": "2025-06-17 23:34:31",
+        "usuario": "Jorge",
+        "acao": "CRIACAO_TRANSACAO_MULTIPLA",
+        "lancamento_id": "3d5d9034-386e-4774-8870-61ea0e7cd8a5",
+        "dados_anteriores": null,
+        "dados_novos": {
+            "historico": "gays me caçaram",
+            "lancamentos": [
+                {
+                    "id": "63ee7d97-b161-44a8-b678-71b3fae75f18",
+                    "transacao_id": "3d5d9034-386e-4774-8870-61ea0e7cd8a5",
+                    "data": "2025-06-17 23:34:31",
+                    "conta_cod": "10101",
+                    "conta_nome": "Caixa Geral",
+                    "tipo": "D",
+                    "valor": 1000.0,
+                    "historico": "gays me caçaram",
+                    "usuario": "Jorge"
+                },
+                {
+                    "id": "0e5f5023-526a-4063-a9b4-4af417840e97",
+                    "transacao_id": "3d5d9034-386e-4774-8870-61ea0e7cd8a5",
+                    "data": "2025-06-17 23:34:31",
+                    "conta_cod": "10101",
+                    "conta_nome": "Caixa Geral",
+                    "tipo": "C",
+                    "valor": 1000.0,
+                    "historico": "gays me caçaram",
+                    "usuario": "Jorge"
+                }
+            ]
+        }
     }
 ]
