@@ -16,10 +16,12 @@
                 <a href="{{ url_for('dashboard') }}" class="btn btn-primary">← Voltar ao Dashboard</a>
             </div>
         </div>
+
         <div class="mb-3 px-md-3">
             <a href="{{ url_for('diario_exportar_csv') }}" class="btn btn-success btn-sm">Exportar para CSV</a>
             <a href="{{ url_for('diario_exportar_pdf') }}" class="btn btn-danger btn-sm ms-2">Exportar para PDF</a>
         </div>
+
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
                 {% for category, message in messages %}
@@ -45,22 +47,35 @@
                         </tr>
                     </thead>
                     <tbody>
+                        {# Lógica para mostrar o botão de excluir apenas uma vez por transação #}
+                        {% set transacoes_processadas = namespace(ids=[]) %}
                         {% for lancamento in lancamentos %}
                         <tr>
                             <td>{{ lancamento.data }}</td>
                             <td>{{ lancamento.conta_nome }} ({{ lancamento.conta_cod }})</td>
                             <td>{{ lancamento.historico }}</td>
                             <td class="text-end">
-                                {% if lancamento.tipo == 'D' %}{{ "%.2f"|format(lancamento.valor) }}{% endif %}
+                                {% if lancamento.tipo == 'D' %}
+                                    {{ "%.2f"|format(lancamento.valor) }}
+                                {% endif %}
                             </td>
                             <td class="text-end">
-                                {% if lancamento.tipo == 'C' %}{{ "%.2f"|format(lancamento.valor) }}{% endif %}
+                                {% if lancamento.tipo == 'C' %}
+                                    {{ "%.2f"|format(lancamento.valor) }}
+                                {% endif %}
                             </td>
                             <td class="text-center">
-                                <a href="{{ url_for('editar_lancamento', lancamento_id=lancamento.id ) }}" class="btn btn-warning btn-sm" title="Editar">✏️</a>
-                                <form action="{{ url_for('excluir_lancamento', lancamento_id=lancamento.id ) }}" method="POST" style="display: inline-block;" onsubmit="return confirm('Tem certeza que deseja excluir este lançamento? Esta ação não pode ser desfeita.');">
-                                    <button type="submit" class="btn btn-danger btn-sm" title="Excluir">🗑️</button>
-                                </form>
+                                <!-- O botão de editar continua a editar uma partida individual pelo seu ID único -->
+                                <a href="{{ url_for('editar_lancamento', lancamento_id=lancamento.id ) }}" class="btn btn-warning btn-sm" title="Editar Partida">✏️</a>
+                                
+                                <!-- O botão de excluir agora deve excluir a transação inteira -->
+                                {% if lancamento.transacao_id and lancamento.transacao_id not in transacoes_processadas.ids %}
+                                    <form action="{{ url_for('excluir_lancamento', transacao_id=lancamento.transacao_id ) }}" method="POST" style="display: inline-block;" onsubmit="return confirm('Tem certeza que deseja excluir esta TRANSAÇÃO COMPLETA (todas as suas partidas de débito e crédito)? Esta ação não pode ser desfeita.');">
+                                        <button type="submit" class="btn btn-danger btn-sm" title="Excluir Transação Completa">🗑️</button>
+                                    </form>
+                                    {# Adiciona o ID da transação à lista de processadas para não repetir o botão #}
+                                    {% set _ = transacoes_processadas.ids.append(lancamento.transacao_id) %}
+                                {% endif %}
                             </td>
                         </tr>
                         {% endfor %}
@@ -73,6 +88,7 @@
             </div>
         {% endif %}
     </div>
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="{{ url_for('static', filename='script.js') }}"></script>
 </body>

@@ -103,5 +103,136 @@
                 }
             ]
         }
+    },
+    {
+        "log_id": 5,
+        "timestamp": "2025-06-18 00:19:53",
+        "usuario": "Jorge",
+        "acao": "EXCLUSAO_TRANSACAO",
+        "transacao_id": "3d5d9034-386e-4774-8870-61ea0e7cd8a5",
+        "detalhes": {
+            "lancamentos_excluidos": [
+                {
+                    "id": "63ee7d97-b161-44a8-b678-71b3fae75f18",
+                    "transacao_id": "3d5d9034-386e-4774-8870-61ea0e7cd8a5",
+                    "data": "2025-06-17 23:34:31",
+                    "conta_cod": "10101",
+                    "conta_nome": "Caixa Geral",
+                    "tipo": "D",
+                    "valor": 1000.0,
+                    "historico": "gays me caçaram",
+                    "usuario": "Jorge"
+                },
+                {
+                    "id": "0e5f5023-526a-4063-a9b4-4af417840e97",
+                    "transacao_id": "3d5d9034-386e-4774-8870-61ea0e7cd8a5",
+                    "data": "2025-06-17 23:34:31",
+                    "conta_cod": "10101",
+                    "conta_nome": "Caixa Geral",
+                    "tipo": "C",
+                    "valor": 1000.0,
+                    "historico": "gays me caçaram",
+                    "usuario": "Jorge"
+                }
+            ]
+        }
+    },
+    {
+        "log_id": 6,
+        "timestamp": "2025-06-18 00:20:36",
+        "usuario": "Jorge",
+        "acao": "CRIACAO_TRANSACAO_MULTIPLA",
+        "transacao_id": "6293bbb4-d1db-4a0f-a141-81649003849f",
+        "detalhes": {
+            "historico": "Recebimento de capital social",
+            "lancamentos": [
+                {
+                    "id": "81c28548-d78b-46d6-a108-3a5283386b65",
+                    "transacao_id": "6293bbb4-d1db-4a0f-a141-81649003849f",
+                    "data": "2025-06-18 00:20:36",
+                    "conta_cod": "10101",
+                    "conta_nome": "Caixa Geral",
+                    "tipo": "D",
+                    "valor": 1000.0,
+                    "historico": "Recebimento de capital social",
+                    "usuario": "Jorge"
+                },
+                {
+                    "id": "931a8cba-9a07-4339-b24d-1adb0ada5fdc",
+                    "transacao_id": "6293bbb4-d1db-4a0f-a141-81649003849f",
+                    "data": "2025-06-18 00:20:36",
+                    "conta_cod": "20101",
+                    "conta_nome": "Fornecedores Nacionais",
+                    "tipo": "C",
+                    "valor": 1000.0,
+                    "historico": "Recebimento de capital social",
+                    "usuario": "Jorge"
+                }
+            ]
+        }
+    },
+    {
+        "log_id": 7,
+        "timestamp": "2025-06-18 00:20:47",
+        "usuario": "Jorge",
+        "acao": "EDICAO_PARTIDA",
+        "transacao_id": "6293bbb4-d1db-4a0f-a141-81649003849f",
+        "detalhes": {
+            "dados_anteriores": {
+                "id": "81c28548-d78b-46d6-a108-3a5283386b65",
+                "transacao_id": "6293bbb4-d1db-4a0f-a141-81649003849f",
+                "data": "2025-06-18 00:20:36",
+                "conta_cod": "10101",
+                "conta_nome": "Caixa Geral",
+                "tipo": "D",
+                "valor": 1000.0,
+                "historico": "Recebimento de capital social",
+                "usuario": "Jorge"
+            },
+            "dados_novos": {
+                "id": "81c28548-d78b-46d6-a108-3a5283386b65",
+                "transacao_id": "6293bbb4-d1db-4a0f-a141-81649003849f",
+                "data": "2025-06-18 00:20:36",
+                "conta_cod": "10101",
+                "conta_nome": "Caixa Geral",
+                "tipo": "D",
+                "valor": 1000.0,
+                "historico": "Recebimento de capital social",
+                "usuario": "Jorge"
+            }
+        }
+    },
+    {
+        "log_id": 8,
+        "timestamp": "2025-06-18 00:20:52",
+        "usuario": "Jorge",
+        "acao": "EXCLUSAO_TRANSACAO",
+        "transacao_id": "6293bbb4-d1db-4a0f-a141-81649003849f",
+        "detalhes": {
+            "lancamentos_excluidos": [
+                {
+                    "id": "81c28548-d78b-46d6-a108-3a5283386b65",
+                    "transacao_id": "6293bbb4-d1db-4a0f-a141-81649003849f",
+                    "data": "2025-06-18 00:20:36",
+                    "conta_cod": "10101",
+                    "conta_nome": "Caixa Geral",
+                    "tipo": "D",
+                    "valor": 1000.0,
+                    "historico": "Recebimento de capital social",
+                    "usuario": "Jorge"
+                },
+                {
+                    "id": "931a8cba-9a07-4339-b24d-1adb0ada5fdc",
+                    "transacao_id": "6293bbb4-d1db-4a0f-a141-81649003849f",
+                    "data": "2025-06-18 00:20:36",
+                    "conta_cod": "20101",
+                    "conta_nome": "Fornecedores Nacionais",
+                    "tipo": "C",
+                    "valor": 1000.0,
+                    "historico": "Recebimento de capital social",
+                    "usuario": "Jorge"
+                }
+            ]
+        }
     }
 ]

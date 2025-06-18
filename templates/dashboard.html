@@ -45,10 +45,8 @@
                         </div>
                         <hr>
 
-                        <!-- Linhas de Débito -->
                         <h6>Partidas a Débito</h6>
                         <div id="debit-entries">
-                            <!-- A primeira linha é fixa -->
                             <div class="row g-2 mb-2 align-items-center debit-row">
                                 <div class="col-8">
                                     <select name="conta_debito" class="form-select" required>
@@ -63,10 +61,8 @@
                         </div>
                         <button type="button" id="add-debit" class="btn btn-outline-primary btn-sm mb-3">+ Adicionar Débito</button>
 
-                        <!-- Linhas de Crédito -->
                         <h6>Partidas a Crédito</h6>
                         <div id="credit-entries">
-                            <!-- A primeira linha é fixa -->
                              <div class="row g-2 mb-2 align-items-center credit-row">
                                 <div class="col-8">
                                     <select name="conta_credito" class="form-select" required>
@@ -82,7 +78,6 @@
                         <button type="button" id="add-credit" class="btn btn-outline-danger btn-sm mb-3">+ Adicionar Crédito</button>
                         <hr>
 
-                        <!-- Totais e Botão de Salvar -->
                         <div class="d-flex justify-content-between align-items-center fw-bold fs-5 mt-2">
                             <span>Total Débitos: <span id="total-debit">R$ 0.00</span></span>
                             <span>Total Créditos: <span id="total-credit">R$ 0.00</span></span>
@@ -100,7 +95,6 @@
             </div>
 
             <div class="col-lg-5">
-                <!-- Seus gráficos e botões de navegação -->
                 <div class="d-grid gap-2 mb-3">
                     <a href="{{ url_for('diario') }}" class="btn btn-secondary">📘 Livro Diário</a>
                     <a href="{{ url_for('razao') }}" class="btn btn-secondary">📗 Livro Razão</a>
@@ -135,12 +129,12 @@
         <div class="row g-2 mb-2 align-items-center debit-row">
             <div class="col-8">
                 <select name="conta_debito" class="form-select" required>
-                    <option value="" disabled selected>Selecione a conta de débito...</option>
+                    <option value="" disabled selected>Selecione a conta...</option>
                     {% for cod, nome_conta_obj in contas.items() %}{% set nome_exibicao = nome_conta_obj if nome_conta_obj is string else nome_conta_obj.get('nome', 'Desconhecida') %}<option value="{{ cod }}">{{ nome_exibicao }} ({{ cod }})</option>{% endfor %}
                 </select>
             </div>
             <div class="col-3">
-                <input type="number" name="valor_debito" class="form-control valor-input" placeholder="Valor (R$)" step="0.01" min="0.01" required>
+                <input type="number" name="valor_debito" class="form-control valor-input" placeholder="Valor" step="0.01" min="0.01" required>
             </div>
             <div class="col-1">
                 <button type="button" class="btn btn-danger btn-sm remove-row">X</button>
@@ -151,12 +145,12 @@
         <div class="row g-2 mb-2 align-items-center credit-row">
             <div class="col-8">
                 <select name="conta_credito" class="form-select" required>
-                    <option value="" disabled selected>Selecione a conta de crédito...</option>
+                    <option value="" disabled selected>Selecione a conta...</option>
                     {% for cod, nome_conta_obj in contas.items() %}{% set nome_exibicao = nome_conta_obj if nome_conta_obj is string else nome_conta_obj.get('nome', 'Desconhecida') %}<option value="{{ cod }}">{{ nome_exibicao }} ({{ cod }})</option>{% endfor %}
                 </select>
             </div>
             <div class="col-3">
-                <input type="number" name="valor_credito" class="form-control valor-input" placeholder="Valor (R$)" step="0.01" min="0.01" required>
+                <input type="number" name="valor_credito" class="form-control valor-input" placeholder="Valor" step="0.01" min="0.01" required>
             </div>
             <div class="col-1">
                 <button type="button" class="btn btn-danger btn-sm remove-row">X</button>
@@ -164,77 +158,74 @@
         </div>
     </template>
     
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            // Lógica para os gráficos do dashboard aqui (se já a tiver)
-        });
-    </script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="{{ url_for('static', filename='script.js') }}"></script>
+    <!-- SCRIPT CORRIGIDO E COMPLETO PARA OS GRÁFICOS E FORMULÁRIO DINÂMICO -->
     <script>
-        // --- JAVASCRIPT PARA O FORMULÁRIO DINÂMICO ---
         document.addEventListener('DOMContentLoaded', function() {
+            // --- Lógica para o Formulário Dinâmico de Lançamentos ---
             const form = document.getElementById('form-lancamento');
-            const addDebitBtn = document.getElementById('add-debit');
-            const addCreditBtn = document.getElementById('add-credit');
-            const debitEntries = document.getElementById('debit-entries');
-            const creditEntries = document.getElementById('credit-entries');
-            const debitTemplate = document.getElementById('debit-row-template');
-            const creditTemplate = document.getElementById('credit-row-template');
+            if (form) { // Garante que o script só corre se o formulário existir
+                const addDebitBtn = document.getElementById('add-debit');
+                const addCreditBtn = document.getElementById('add-credit');
+                const debitEntries = document.getElementById('debit-entries');
+                const creditEntries = document.getElementById('credit-entries');
+                const debitTemplate = document.getElementById('debit-row-template');
+                const creditTemplate = document.getElementById('credit-row-template');
 
-            const totalDebitEl = document.getElementById('total-debit');
-            const totalCreditEl = document.getElementById('total-credit');
-            const balanceAlert = document.getElementById('balance-alert');
-            const submitBtn = document.getElementById('submit-lancamento');
+                const totalDebitEl = document.getElementById('total-debit');
+                const totalCreditEl = document.getElementById('total-credit');
+                const balanceAlert = document.getElementById('balance-alert');
+                const submitBtn = document.getElementById('submit-lancamento');
 
-            function addEntry(type) {
-                const template = (type === 'debit') ? debitTemplate : creditTemplate;
-                const clone = template.content.cloneNode(true);
-                const container = (type === 'debit') ? debitEntries : creditEntries;
-                container.appendChild(clone);
-                updateTotals();
-            }
-
-            addDebitBtn.addEventListener('click', () => addEntry('debit'));
-            addCreditBtn.addEventListener('click', () => addEntry('credit'));
-
-            form.addEventListener('click', function(e) {
-                if (e.target && e.target.classList.contains('remove-row')) {
-                    e.target.closest('.row').remove();
-                    updateTotals();
+                function addEntry(type) {
+                    const template = (type === 'debit') ? debitTemplate : creditTemplate;
+                    const clone = template.content.cloneNode(true);
+                    const container = (type === 'debit') ? debitEntries : creditEntries;
+                    container.appendChild(clone);
                 }
-            });
 
-            form.addEventListener('input', function(e) {
-                if(e.target && e.target.classList.contains('valor-input')) {
-                    updateTotals();
-                }
-            });
+                addDebitBtn.addEventListener('click', () => addEntry('debit'));
+                addCreditBtn.addEventListener('click', () => addEntry('credit'));
 
-            function updateTotals() {
-                let totalDebit = 0;
-                let totalCredit = 0;
-                
-                document.querySelectorAll('input[name="valor_debito"]').forEach(input => {
-                    totalDebit += parseFloat(input.value) || 0;
-                });
-                document.querySelectorAll('input[name="valor_credito"]').forEach(input => {
-                    totalCredit += parseFloat(input.value) || 0;
+                form.addEventListener('click', function(e) {
+                    if (e.target && e.target.classList.contains('remove-row')) {
+                        e.target.closest('.row').remove();
+                        updateTotals();
+                    }
                 });
 
-                totalDebitEl.textContent = `R$ ${totalDebit.toFixed(2)}`;
-                totalCreditEl.textContent = `R$ ${totalCredit.toFixed(2)}`;
+                form.addEventListener('input', function(e) {
+                    if(e.target && e.target.classList.contains('valor-input')) {
+                        updateTotals();
+                    }
+                });
 
-                if (totalDebit > 0 && Math.abs(totalDebit - totalCredit) < 0.01) {
-                    balanceAlert.classList.add('d-none');
-                    submitBtn.disabled = false;
-                } else {
-                    balanceAlert.classList.remove('d-none');
-                    submitBtn.disabled = true;
+                function updateTotals() {
+                    let totalDebit = 0;
+                    let totalCredit = 0;
+                    
+                    document.querySelectorAll('input[name="valor_debito"]').forEach(input => {
+                        totalDebit += parseFloat(input.value) || 0;
+                    });
+                    document.querySelectorAll('input[name="valor_credito"]').forEach(input => {
+                        totalCredit += parseFloat(input.value) || 0;
+                    });
+
+                    totalDebitEl.textContent = `R$ ${totalDebit.toFixed(2)}`;
+                    totalCreditEl.textContent = `R$ ${totalCredit.toFixed(2)}`;
+
+                    if (totalDebit > 0 && Math.abs(totalDebit - totalCredit) < 0.01) {
+                        balanceAlert.classList.add('d-none');
+                        submitBtn.disabled = false;
+                    } else {
+                        balanceAlert.classList.remove('d-none');
+                        submitBtn.disabled = true;
+                    }
                 }
             }
-            
-            // --- Script para Gráfico de Pizza (Despesas) ---
+
+            // --- Lógica para o Gráfico de Pizza (Despesas) ---
             const canvasDespesasPizza = document.getElementById('graficoDespesasPizza');
             let despesasPizzaData = null;
             let chartInstanceDespesasPizza = null;
@@ -288,6 +279,7 @@
                 });
             }
 
+            // --- Funções para atualizar cores dos gráficos ---
             window.updateChartColorsForPieDashboard = function(isDarkMode) {
                 if (chartInstanceDespesasPizza) {
                     const newLegendColor = isDarkMode ? '#e0e0e0' : '#333';

@@ -400,7 +400,6 @@ def excluir_lancamento(transacao_id):
     id_empresa_atual = session['id_empresa']
     lancamentos = carregar_lancamentos_empresa(id_empresa_atual)
     
-    # Exclui todas as partidas (débitos e créditos) associadas à mesma transacao_id
     lancamentos_a_manter = [l for l in lancamentos if str(l.get('transacao_id')) != str(transacao_id)]
     lancamentos_excluidos = [l for l in lancamentos if str(l.get('transacao_id')) == str(transacao_id)]
 
@@ -546,7 +545,6 @@ def razao_exportar_pdf():
         return redirect(url_for('login'))
     id_empresa_atual = session['id_empresa']
     nome_empresa_atual = session.get('nome_empresa', 'Empresa Desconhecida')
-    
     lancamentos = carregar_lancamentos_empresa(id_empresa_atual)
     contas = carregar_contas_empresa(id_empresa_atual)
     razao_por_conta_dados = {} 
